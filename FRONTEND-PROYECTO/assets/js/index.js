@@ -62,68 +62,134 @@ class IndexPageManager {
         }
     }
 
+    //async handleLogin(e) {
+    //    e.preventDefault();
+    //    
+    //    const loginBtn = e.target.querySelector('button[type="submit"]');
+    //    
+    //    try {
+    //        UIHelpers.showButtonSpinner(loginBtn, true);
+//
+    //        const email = document.getElementById('loginEmail').value.trim();
+    //        const password = document.getElementById('loginPassword').value;
+//
+    //        // Validar formulario
+    //        if (!Validator.validateForm(e.target)) {
+    //            return;
+    //        }
+//
+    //        // Obtener todos los clientes
+    //        const clientes = await ApiClient.get('/Cliente/obtenerTodos');
+//
+    //        // Buscar coincidencia de email + contraseña
+    //        const cliente = clientes.find(c => c.correo === email && c.contrasenia === password);
+//
+    //        if (cliente) {
+    //            // Guardar sesión
+    //            AuthManager.login("fakeToken", cliente);
+//
+    //            // Cerrar modal
+    //            const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+    //            modal.hide();
+//
+    //            // Mostrar mensaje de éxito
+    //            UIHelpers.showToast(`¡Bienvenido ${cliente.nombre}!`, 'success');
+//
+    //            // Actualizar UI
+    //            AuthManager.updateUIAuthentication();
+    //        } else {
+    //            throw new Error('Correo o contraseña incorrectos');
+    //        }
+//
+    //    } catch (error) {
+    //        console.error('Login error:', error);
+    //        UIHelpers.showToast(error.message || 'Error al iniciar sesión', 'danger');
+    //    } finally {
+    //        UIHelpers.showButtonSpinner(loginBtn, false);
+    //    }
+    //}
 
-    /**
-      
+    //async handleLogin(e) {
+    //    e.preventDefault();
+    //    
+    //    const loginBtn = e.target.querySelector('button[type="submit"]');
+    //    
+    //    try {
+    //        UIHelpers.showButtonSpinner(loginBtn, true);
+//
+    //        const email = document.getElementById('loginEmail').value.trim();
+    //        const password = document.getElementById('loginPassword').value;
+//
+    //        // Validar formulario
+    //        if (!Validator.validateForm(e.target)) {
+    //            return;
+    //        }
+//
+    //        // Llamar al nuevo endpoint de login
+    //        const idCliente = await ApiClient.get(`/Cliente/login/${email}/${password}`);
+//
+    //        if (idCliente) {
+    //            // Traer datos completos del cliente
+    //            const cliente = await ApiClient.get(`/Cliente/obtener/${idCliente}`);
+//
+    //            if (!cliente) {
+    //                throw new Error("No se encontraron los datos del cliente");
+    //            }
+//
+    //            // Guardar sesión
+    //            AuthManager.login("fakeToken", cliente);
+//
+    //            // Cerrar modal
+    //            const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+    //            modal.hide();
+//
+    //            // Mostrar mensaje de éxito
+    //            UIHelpers.showToast(`¡Bienvenido cliente ${cliente.nombre}!`, 'success');
+//
+    //            // Actualizar UI
+    //            AuthManager.updateUIAuthentication();
+//
+    //        } else {
+    //            const idEntrenador = await ApiClient.get(`/Entrenador/login/${email}/${password}`);
+    //            if (idEntrenador){
+    //                // Traer datos completos del cliente
+    //                const entrenador = await ApiClient.get(`/Entrenador/obtener/${idEntrenador}`);
+//
+    //                if (!entrenador) {
+    //                    throw new Error("No se encontraron los datos del cliente");
+    //                }
+//
+    //                // Guardar sesión
+    //                AuthManager.login("fakeToken", entrenador);
+//
+    //                // Cerrar modal
+    //                const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+    //                modal.hide();
+//
+    //                // Mostrar mensaje de éxito
+    //                UIHelpers.showToast(`¡Bienvenido entrenador ${entrenador.nombre}!`, 'success');
+//
+    //                // Actualizar UI
+    //                AuthManager.updateUIAuthentication();
+    //            } else{
+    //                throw new Error('Correo o contraseña incorrectos, Usuario no encontrado');
+    //            }
+    //        }
+//
+    //    } catch (error) {
+    //        console.error('Login error:', error);
+    //        UIHelpers.showToast(error.message || 'Error al iniciar sesión', 'danger');
+    //    } finally {
+    //        UIHelpers.showButtonSpinner(loginBtn, false);
+    //    }
+    //}   
+
+
     async handleLogin(e) {
         e.preventDefault();
-        
+
         const loginBtn = e.target.querySelector('button[type="submit"]');
-        const spinner = document.getElementById('loginSpinner');
-        
-        try {
-            UIHelpers.showButtonSpinner(loginBtn, true);
 
-            const formData = {
-                email: document.getElementById('loginEmail').value.trim(),
-                password: document.getElementById('loginPassword').value
-            };
-
-            // Validar formulario
-            if (!Validator.validateForm(e.target)) {
-                return;
-            }
-
-            // TODO: Reemplazar con llamada real al API
-            // const response = await ApiClient.post('/auth/login', formData);
-            
-            // Simulación temporal
-            const mockResponse = await this.simulateLoginAPI(formData);
-            
-            if (mockResponse.success) {
-                // Guardar sesión
-                AuthManager.login(mockResponse.token, mockResponse.user);
-                
-                // Cerrar modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                modal.hide();
-                
-                // Mostrar mensaje de éxito
-                UIHelpers.showToast('¡Bienvenido de nuevo!', 'success');
-                
-                // Actualizar UI
-                AuthManager.updateUIAuthentication();
-            } else {
-                throw new Error(mockResponse.message || 'Error en el login');
-            }
-
-        } catch (error) {
-            console.error('Login error:', error);
-            UIHelpers.showToast(error.message || 'Error al iniciar sesión', 'danger');
-        } finally {
-            UIHelpers.showButtonSpinner(loginBtn, false);
-        }
-    }
-    */
-    
-    //////////////////////////////////////////////////////////////////////
-
-
-    async handleLogin(e) {
-        e.preventDefault();
-        
-        const loginBtn = e.target.querySelector('button[type="submit"]');
-        
         try {
             UIHelpers.showButtonSpinner(loginBtn, true);
 
@@ -135,37 +201,63 @@ class IndexPageManager {
                 return;
             }
 
-            // Obtener todos los clientes
-            const clientes = await ApiClient.get('/Cliente/obtenerTodos');
+            // 1. Intentar login como Cliente
+            let user = null;
+            let tipoUsuario = null;
 
-            // Buscar coincidencia de email + contraseña
-            const cliente = clientes.find(c => c.correo === email && c.contrasenia === password);
-
-            if (cliente) {
-                // Guardar sesión
-                AuthManager.login("fakeToken", cliente);
-
-                // Cerrar modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                modal.hide();
-
-                // Mostrar mensaje de éxito
-                UIHelpers.showToast(`¡Bienvenido ${cliente.nombre}!`, 'success');
-
-                // Actualizar UI
-                AuthManager.updateUIAuthentication();
-            } else {
-                throw new Error('Correo o contraseña incorrectos');
+            try {
+                const idCliente = await ApiClient.get(`/Cliente/login/${email}/${password}`);
+                if (idCliente) {
+                    const cliente = await ApiClient.get(`/Cliente/obtener/${idCliente}`);
+                    if (!cliente) throw new Error("No se encontraron los datos del cliente");
+                    user = cliente;
+                    tipoUsuario = "cliente";
+                }
+            } catch (err) {
+                console.warn("No se encontró cliente, intentando como entrenador...");
+            }
+            console.log(user)
+            // 2. Si no es Cliente, intentar login como Entrenador
+            if (!user) {
+                try {
+            
+                    const idEntrenador = await ApiClient.get(`/Entrenador/login/${email}/${password}`);
+                    if (idEntrenador) {
+                        const entrenador = await ApiClient.get(`/Entrenador/obtener/${idEntrenador}`);
+                        if (!entrenador) throw new Error("No se encontraron los datos del entrenador");
+                        user = entrenador;
+                        tipoUsuario = "entrenador";
+                    }
+                } catch (err) {
+                    console.warn("No se encontró entrenador");
+                }
             }
 
+            // 3. Si no encontró nada
+            if (!user) {
+                throw new Error("Correo o contraseña incorrectos, usuario no encontrado");
+            }
+
+            // 4. Guardar sesión
+            AuthManager.login("fakeToken", { ...user, tipoUsuario });
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+            modal.hide();
+
+            // Mostrar mensaje de éxito
+            UIHelpers.showToast(`¡Bienvenido ${tipoUsuario}: ${user.nombres}!`, 'success');
+
+            // Actualizar UI según tipo de usuario
+            AuthManager.updateUIAuthentication();
+
         } catch (error) {
-            console.error('Login error:', error);
-            UIHelpers.showToast(error.message || 'Error al iniciar sesión', 'danger');
+            console.error("Login error:", error);
+            UIHelpers.showToast(error.message || "Error al iniciar sesión", "danger");
         } finally {
             UIHelpers.showButtonSpinner(loginBtn, false);
         }
-    }
-
+    }   
 
     /////////////////////////////////////////////////////////////////////////////
 
@@ -179,29 +271,38 @@ class IndexPageManager {
 
             const formData = {
                 idCliente: null,
-                nombre: document.getElementById('clientFirstName').value.trim() + " " + document.getElementById('clientLastName').value.trim(),
+                nombres: document.getElementById('clientFirstName').value.trim() || "", 
+                apellidos: document.getElementById('clientLastName').value.trim() || "",
                 correo: document.getElementById('clientEmail').value.trim(),
                 contrasenia: document.getElementById('clientPassword').value,
+                fotoPerfil: null,
                 fechaNacimiento: null,
                 estatura: null,
                 peso: null,
                 telefono: document.getElementById('clientPhone').value.trim(),
                 ubicacion: document.getElementById('clientLocation').value.trim(),
+                fechaRegistro: null,
+                sesiones: [],
                 resenias: []
                 
+                
             };
-
+            
+            //console.log("formData que se envía: ", formData)
+            const contrasenia = document.getElementById('clientPassword').value;
+            const confirmPassword = document.getElementById('clientConfirmPassword').value;
+            
             // Validar formulario
             if (!Validator.validateForm(e.target)) {
                 return;
             }
-
+            
             // Validación adicional de contraseñas
-            if (!Validator.passwordsMatch(formData.password, formData.confirmPassword)) {
+            if (!Validator.passwordsMatch(contrasenia, confirmPassword)) {
                 UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
                 return;
             }
-
+            
             const response = await ApiClient.post('/Cliente/crear', formData);
             
             if (response) {
@@ -229,6 +330,65 @@ class IndexPageManager {
         }
     }
 
+    //async handleTrainerRegister(e) {
+    //    e.preventDefault();
+    //    
+    //    const registerBtn = e.target.querySelector('button[type="submit"]');
+    //    
+    //    try {
+    //        UIHelpers.showButtonSpinner(registerBtn, true);
+//
+    //        const formData = new FormData();
+    //        formData.append('firstName', document.getElementById('trainerFirstName').value.trim());
+    //        formData.append('lastName', document.getElementById('trainerLastName').value.trim());
+    //        formData.append('email', document.getElementById('trainerEmail').value.trim());
+    //        formData.append('phone', document.getElementById('trainerPhone').value.trim());
+    //        formData.append('password', document.getElementById('trainerPassword').value);
+    //        formData.append('confirmPassword', document.getElementById('trainerConfirmPassword').value);
+    //        formData.append('specialty', document.getElementById('trainerSpecialty').value.trim());
+    //        formData.append('location', document.getElementById('trainerLocation').value.trim());
+    //        formData.append('userType', 'trainer');
+//
+    //        // Archivos
+    //        const certifications = document.getElementById('trainerCertifications').files[0];
+    //        const background = document.getElementById('trainerBackground').files[0];
+    //        
+    //        if (certifications) formData.append('certifications', certifications);
+    //        if (background) formData.append('background', background);
+//
+    //        // Validar formulario
+    //        if (!Validator.validateForm(e.target)) {
+    //            return;
+    //        }
+//
+    //        // TODO: Reemplazar con llamada real al API
+    //        // const response = await ApiClient.post('/auth/register-trainer', formData);
+    //        
+    //        // Simulación temporal
+    //        const mockResponse = await this.simulateTrainerRegisterAPI(formData);
+    //        
+    //        if (mockResponse.success) {
+    //            // Cerrar modal
+    //            const modal = bootstrap.Modal.getInstance(document.getElementById('registerTrainerModal'));
+    //            modal.hide();
+    //            
+    //            // Mostrar mensaje de éxito
+    //            UIHelpers.showToast('¡Registro exitoso! Tu cuenta será revisada en 24-48 horas.', 'success');
+    //            
+    //        } else {
+    //            throw new Error(mockResponse.message || 'Error en el registro');
+    //        }
+//
+    //    } catch (error) {
+    //        console.error('Trainer register error:', error);
+    //        UIHelpers.showToast(error.message || 'Error al registrarse como entrenador', 'danger');
+    //    } finally {
+    //        UIHelpers.showButtonSpinner(registerBtn, false);
+    //    }
+    //}
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------
     async handleTrainerRegister(e) {
         e.preventDefault();
         
@@ -237,45 +397,46 @@ class IndexPageManager {
         try {
             UIHelpers.showButtonSpinner(registerBtn, true);
 
-            const formData = new FormData();
-            formData.append('firstName', document.getElementById('trainerFirstName').value.trim());
-            formData.append('lastName', document.getElementById('trainerLastName').value.trim());
-            formData.append('email', document.getElementById('trainerEmail').value.trim());
-            formData.append('phone', document.getElementById('trainerPhone').value.trim());
-            formData.append('password', document.getElementById('trainerPassword').value);
-            formData.append('confirmPassword', document.getElementById('trainerConfirmPassword').value);
-            formData.append('specialty', document.getElementById('trainerSpecialty').value.trim());
-            formData.append('location', document.getElementById('trainerLocation').value.trim());
-            formData.append('userType', 'trainer');
-
-            // Archivos
-            const certifications = document.getElementById('trainerCertifications').files[0];
-            const background = document.getElementById('trainerBackground').files[0];
+            const formData = {
+                idEntrenador: null,
+                nombres: document.getElementById('trainerFirstName').value.trim(),
+                apellidos: document.getElementById('trainerLastName').value.trim(),
+                correo: document.getElementById('trainerEmail').value.trim(),
+                contrasenia: document.getElementById('trainerPassword').value,
+                especialidad: [document.getElementById('trainerSpecialty').value.trim()],
+                certificaciones: [], // Se manejarían por separado los archivos
+                fotoPerfil: null,
+                fechaRegistro: null,
+                resenias: [],
+                sesiones: [],
+                servicios: []
+            };
             
-            if (certifications) formData.append('certifications', certifications);
-            if (background) formData.append('background', background);
-
+            console.log("formData que se envía:", formData);
             // Validar formulario
             if (!Validator.validateForm(e.target)) {
                 return;
             }
 
-            // TODO: Reemplazar con llamada real al API
-            // const response = await ApiClient.post('/auth/register-trainer', formData);
-            
-            // Simulación temporal
-            const mockResponse = await this.simulateTrainerRegisterAPI(formData);
-            
-            if (mockResponse.success) {
+            // Validación adicional de contraseñas
+            const confirmPassword = document.getElementById('trainerConfirmPassword').value;
+            if (formData.contrasenia !== confirmPassword) {
+                UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
+                return;
+            }
+
+            const response = await ApiClient.post('/Entrenador/crear', formData);
+
+            if (response) {
                 // Cerrar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('registerTrainerModal'));
                 modal.hide();
-                
+
                 // Mostrar mensaje de éxito
                 UIHelpers.showToast('¡Registro exitoso! Tu cuenta será revisada en 24-48 horas.', 'success');
-                
+
             } else {
-                throw new Error(mockResponse.message || 'Error en el registro');
+                throw new Error('Error en el registro');
             }
 
         } catch (error) {
@@ -284,7 +445,8 @@ class IndexPageManager {
         } finally {
             UIHelpers.showButtonSpinner(registerBtn, false);
         }
-    }
+    }   
+
 
     // ==================== BÚSQUEDA ====================
     initializePriceRange() {

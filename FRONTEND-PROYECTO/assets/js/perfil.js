@@ -93,42 +93,134 @@ class PerfilPageManager {
     }
 
     // ==================== CARGA DE DATOS ====================
+    //async loadUserProfile() {
+    //    try {
+    //        // TODO: Reemplazar con llamada real al API
+    //        // const userData = await ApiClient.get('/user/profile', true);
+    //        
+    //        // Simulación temporal
+    //        const userData = await this.simulateGetUserProfile();
+    //        
+    //        this.populateUserData(userData);
+    //        this.originalFormData = this.getFormData();
+//
+    //    } catch (error) {
+    //        console.error('Error loading user profile:', error);
+    //        UIHelpers.showToast('Error al cargar el perfil de usuario', 'danger');
+    //    }
+    //}
+
+    // CARGAR PERFIL DE USUARIO
+    //async loadUserProfile() {
+    //    try {
+    //        const currentUser = AuthManager.getUser();
+    //        if (!currentUser || !currentUser.idCliente) {
+    //            throw new Error('Usuario no autenticado');
+    //        }
+//
+    //        // Obtener datos actualizados del cliente
+    //        const userData = await ApiClient.get(`/Cliente/obtener/${currentUser.idCliente}`);
+//
+    //        if (userData) {
+    //            this.populateUserData(userData);
+    //            this.originalFormData = this.getFormData();
+    //        } else {
+    //            throw new Error('No se encontraron datos del usuario');
+    //        }
+//
+    //    } catch (error) {
+    //        console.error('Error loading user profile:', error);
+    //        UIHelpers.showToast('Error al cargar el perfil de usuario', 'danger');
+    //    }
+    //}
+
     async loadUserProfile() {
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const userData = await ApiClient.get('/user/profile', true);
-            
-            // Simulación temporal
-            const userData = await this.simulateGetUserProfile();
-            
-            this.populateUserData(userData);
-            this.originalFormData = this.getFormData();
+            const currentUser = AuthManager.getUser();
+            if (!currentUser || !currentUser.idCliente && !currentUser.idEntrenador) {
+                throw new Error('Usuario no autenticado');
+            }
+
+            let userData;
+
+            // Determinar si es cliente o entrenador
+            if (currentUser.tipoUsuario === 'cliente') {
+                userData = await ApiClient.get(`/Cliente/obtener/${currentUser.idCliente}`);
+            } else if (currentUser.tipoUsuario === 'entrenador') {
+                userData = await ApiClient.get(`/Entrenador/obtener/${currentUser.idEntrenador}`);
+            }
+
+            if (userData) {
+                this.populateUserData(userData, currentUser.tipoUsuario);
+                this.originalFormData = this.getFormData();
+            } else {
+                throw new Error('No se encontraron datos del usuario');
+            }
 
         } catch (error) {
             console.error('Error loading user profile:', error);
             UIHelpers.showToast('Error al cargar el perfil de usuario', 'danger');
         }
-    }
+    }   
+
 
     populateUserData(userData) {
+        console.log("Datos recibidos del backend:", userData);
+
         // Actualizar header
-        document.getElementById('profileName').textContent = `${userData.firstName} ${userData.lastName}`;
-        document.getElementById('memberSince').textContent = `Miembro desde: ${UIHelpers.formatDate(userData.memberSince)}`;
+        document.getElementById('profileName').textContent = `${userData.nombres}`;
+        document.getElementById('memberSince').textContent = `Miembro desde: ${userData.fechaRegistro}`;
         
         if (userData.avatar) {
-            document.getElementById('profileAvatar').src = userData.avatar;
+            document.getElementById('profileAvatar').src = userData.fotoPerfil;
         }
 
         // Llenar formulario
-        document.getElementById('firstName').value = userData.firstName || '';
-        document.getElementById('lastName').value = userData.lastName || '';
-        document.getElementById('email').value = userData.email || '';
-        document.getElementById('phone').value = userData.phone || '';
-        document.getElementById('birthDate').value = userData.birthDate || '';
-        document.getElementById('location').value = userData.location || '';
-        document.getElementById('weight').value = userData.weight || '';
-        document.getElementById('height').value = userData.height || '';
-        document.getElementById('bio').value = userData.bio || '';
+        document.getElementById('firstName').value = userData.nombres || '';
+        document.getElementById('lastName').value = userData.apellidos || '';
+        document.getElementById('email').value = userData.correo || '';
+        document.getElementById('phone').value = userData.telefono || '';
+        document.getElementById('birthDate').value = userData.fechaNacimiento || '';
+        document.getElementById('location').value = userData.ubicacion || '';
+        document.getElementById('weight').value = userData.peso || '';
+        document.getElementById('height').value = userData.estatura || '';
+        document.getElementById('bio').value = null || '';
+    }
+
+    populateUserData(userData, tipoUsuario) {
+        console.log("Datos recibidos del backend:", userData);
+
+        // Header
+        document.getElementById('profileName').textContent = 
+            `${userData.nombres || userData.nombre || ''} ${userData.apellidos || ''}`;
+        document.getElementById('memberSince').textContent = 
+            `Miembro desde: ${userData.fechaRegistro || ''}`;
+
+        if (userData.fotoPerfil) {
+            document.getElementById('profileAvatar').src = userData.fotoPerfil;
+        }
+
+        // Campos comunes
+        document.getElementById('firstName').value = userData.nombres || userData.nombre || '';
+        document.getElementById('lastName').value = userData.apellidos || '';
+        document.getElementById('email').value = userData.correo || '';
+        document.getElementById('phone').value = userData.telefono || '';
+        document.getElementById('birthDate').value = userData.fechaNacimiento || '';
+        document.getElementById('location').value = userData.ubicacion || '';
+
+        // Solo clientes
+        if (tipoUsuario === 'cliente') {
+            document.getElementById('weight').value = userData.peso || '';
+            document.getElementById('height').value = userData.estatura || '';
+            document.getElementById('bio').value = ''; // cliente no suele tener bio
+        }
+
+        // Solo entrenadores
+        if (tipoUsuario === 'entrenador') {
+            document.getElementById('weight').value = ''; // no aplica
+            document.getElementById('height').value = ''; // no aplica
+            document.getElementById('bio').value = userData.biografia || '';
+        }
     }
 
     async loadScheduledSessions() {
@@ -170,12 +262,108 @@ class PerfilPageManager {
     }
 
     // ==================== MANEJO DE FORMULARIOS ====================
+    //async handleProfileUpdate(e) {
+    //    e.preventDefault();
+    //    
+    //    const submitBtn = e.target.querySelector('button[type="submit"]');
+    //    const spinner = document.getElementById('saveSpinner');
+    //    
+    //    try {
+    //        if (!Validator.validateForm(e.target)) {
+    //            UIHelpers.showToast('Por favor corrige los errores en el formulario', 'warning');
+    //            return;
+    //        }
+//
+    //        UIHelpers.showButtonSpinner(submitBtn, true);
+//
+    //        const formData = this.getFormData();
+    //        
+    //        // TODO: Reemplazar con llamada real al API
+    //        // const response = await ApiClient.put('/user/profile', formData, true);
+    //        
+    //        // Simulación temporal
+    //        const response = await this.simulateUpdateProfile(formData);
+    //        
+    //        if (response.success) {
+    //            // Actualizar datos originales
+    //            this.originalFormData = formData;
+    //            
+    //            // Actualizar datos en AuthManager
+    //            const user = AuthManager.getUser();
+    //            AuthManager.login(AuthManager.getToken(), { ...user, ...formData });
+    //            
+    //            UIHelpers.showToast('Perfil actualizado exitosamente', 'success');
+    //            
+    //            // Actualizar header
+    //            document.getElementById('profileName').textContent = `${formData.firstName} ${formData.lastName}`;
+    //        } else {
+    //            throw new Error(response.message || 'Error al actualizar perfil');
+    //        }
+//
+    //    } catch (error) {
+    //        console.error('Profile update error:', error);
+    //        UIHelpers.showToast(error.message || 'Error al actualizar el perfil', 'danger');
+    //    } finally {
+    //        UIHelpers.showButtonSpinner(submitBtn, false);
+    //    }
+    //}
+//
+    //async handlePasswordChange(e) {
+    //    e.preventDefault();
+    //    
+    //    const submitBtn = e.target.querySelector('button[type="submit"]');
+    //    const spinner = document.getElementById('passwordSpinner');
+    //    
+    //    try {
+    //        if (!Validator.validateForm(e.target)) {
+    //            UIHelpers.showToast('Por favor corrige los errores en el formulario', 'warning');
+    //            return;
+    //        }
+//
+    //        const currentPassword = document.getElementById('currentPassword').value;
+    //        const newPassword = document.getElementById('newPassword').value;
+    //        const confirmPassword = document.getElementById('confirmNewPassword').value;
+//
+    //        // Validar que las contraseñas coincidan
+    //        if (!Validator.passwordsMatch(newPassword, confirmPassword)) {
+    //            UIHelpers.showToast('Las contraseñas nuevas no coinciden', 'danger');
+    //            return;
+    //        }
+//
+    //        UIHelpers.showButtonSpinner(submitBtn, true);
+//
+    //        const passwordData = {
+    //            currentPassword,
+    //            newPassword
+    //        };
+//
+    //        // TODO: Reemplazar con llamada real al API
+    //        // const response = await ApiClient.put('/user/password', passwordData, true);
+    //        
+    //        // Simulación temporal
+    //        const response = await this.simulateChangePassword(passwordData);
+    //        
+    //        if (response.success) {
+    //            UIHelpers.showToast('Contraseña cambiada exitosamente', 'success');
+    //            document.getElementById('passwordForm').reset();
+    //        } else {
+    //            throw new Error(response.message || 'Error al cambiar contraseña');
+    //        }
+//
+    //    } catch (error) {
+    //        console.error('Password change error:', error);
+    //        UIHelpers.showToast(error.message || 'Error al cambiar la contraseña', 'danger');
+    //    } finally {
+    //        UIHelpers.showButtonSpinner(submitBtn, false);
+    //    }
+    //}
+
+    // ACTUALIZAR PERFIL
     async handleProfileUpdate(e) {
         e.preventDefault();
-        
+
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        const spinner = document.getElementById('saveSpinner');
-        
+
         try {
             if (!Validator.validateForm(e.target)) {
                 UIHelpers.showToast('Por favor corrige los errores en el formulario', 'warning');
@@ -185,27 +373,68 @@ class PerfilPageManager {
             UIHelpers.showButtonSpinner(submitBtn, true);
 
             const formData = this.getFormData();
-            
-            // TODO: Reemplazar con llamada real al API
-            // const response = await ApiClient.put('/user/profile', formData, true);
-            
-            // Simulación temporal
-            const response = await this.simulateUpdateProfile(formData);
-            
-            if (response.success) {
+            const currentUser = AuthManager.getUser();
+            console.log("Formulario", formData)
+            if (!currentUser) {
+                throw new Error("No hay usuario autenticado");
+            }
+
+            let updateData = {};
+            let response = null;
+
+            // 🔹 Si es CLIENTE
+            if (currentUser.tipoUsuario === "cliente") {
+                updateData = {
+                    idCliente: currentUser.idCliente,
+                    nombres: formData.firstName,
+                    apellidos: formData.lastName,
+                    correo: formData.email,
+                    contrasenia: currentUser.contrasenia, // Mantener contraseña actual
+                    fotoPerfil: null,
+                    fechaNacimiento: formData.birthDate ? new Date(formData.birthDate).getTime() : null,
+                    estatura: formData.height ? parseFloat(formData.height) : null,
+                    peso: formData.weight ? parseFloat(formData.weight) : null,
+                    telefono: formData.phone,
+                    ubicacion: formData.location,
+                    fechaRegistro: null
+                };
+                console.log("UpdateData", updateData)
+                response = await ApiClient.put('/Cliente/actualizar', updateData);
+            }
+
+            // 🔹 Si es ENTRENADOR
+            if (currentUser.tipoUsuario === "entrenador") {
+                updateData = {
+                    idEntrenador: currentUser.idEntrenador,
+                    nombres: formData.firstName,
+                    apellidos: formData.lastName,
+                    correo: formData.email,
+                    contrasenia: currentUser.contrasenia,
+                    especialidad: formData.specialty ? [formData.specialty] : currentUser.especialidad || [],
+                    certificaciones: currentUser.certificaciones || [],
+                    fotoPerfil: currentUser.fotoPerfil || null,
+                    fechaRegistro: currentUser.fechaRegistro || null,
+                    resenias: currentUser.resenias || [],
+                    sesiones: currentUser.sesiones || [],
+                    servicios: currentUser.servicios || []
+                };
+
+                response = await ApiClient.put('/Entrenador/actualizar', updateData);
+            }
+
+            if (response) {
                 // Actualizar datos originales
                 this.originalFormData = formData;
-                
-                // Actualizar datos en AuthManager
-                const user = AuthManager.getUser();
-                AuthManager.login(AuthManager.getToken(), { ...user, ...formData });
-                
+
+                // 🔹 Guardar nuevamente en sesión con tipoUsuario
+                AuthManager.login(AuthManager.getToken(), { ...response, tipoUsuario: currentUser.tipoUsuario });
+
                 UIHelpers.showToast('Perfil actualizado exitosamente', 'success');
-                
-                // Actualizar header
-                document.getElementById('profileName').textContent = `${formData.firstName} ${formData.lastName}`;
+
+                // Actualizar header (usa nombres para ambos tipos)
+                document.getElementById('profileName').textContent = response.nombres;
             } else {
-                throw new Error(response.message || 'Error al actualizar perfil');
+                throw new Error('Error al actualizar perfil');
             }
 
         } catch (error) {
@@ -216,55 +445,8 @@ class PerfilPageManager {
         }
     }
 
-    async handlePasswordChange(e) {
-        e.preventDefault();
-        
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const spinner = document.getElementById('passwordSpinner');
-        
-        try {
-            if (!Validator.validateForm(e.target)) {
-                UIHelpers.showToast('Por favor corrige los errores en el formulario', 'warning');
-                return;
-            }
 
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmNewPassword').value;
-
-            // Validar que las contraseñas coincidan
-            if (!Validator.passwordsMatch(newPassword, confirmPassword)) {
-                UIHelpers.showToast('Las contraseñas nuevas no coinciden', 'danger');
-                return;
-            }
-
-            UIHelpers.showButtonSpinner(submitBtn, true);
-
-            const passwordData = {
-                currentPassword,
-                newPassword
-            };
-
-            // TODO: Reemplazar con llamada real al API
-            // const response = await ApiClient.put('/user/password', passwordData, true);
-            
-            // Simulación temporal
-            const response = await this.simulateChangePassword(passwordData);
-            
-            if (response.success) {
-                UIHelpers.showToast('Contraseña cambiada exitosamente', 'success');
-                document.getElementById('passwordForm').reset();
-            } else {
-                throw new Error(response.message || 'Error al cambiar contraseña');
-            }
-
-        } catch (error) {
-            console.error('Password change error:', error);
-            UIHelpers.showToast(error.message || 'Error al cambiar la contraseña', 'danger');
-        } finally {
-            UIHelpers.showButtonSpinner(submitBtn, false);
-        }
-    }
+    
 
     resetFormData() {
         UIHelpers.showConfirmModal(

@@ -146,11 +146,14 @@ const ApiClient = {
 
     // PUT request
     async put(endpoint, data = {}, includeAuth = false) {
+        dataToSend = JSON.stringify(data)
+        console.log("data enviada", dataToSend)
+        
         try {
             const response = await fetch(`${CONFIG.API_BASE_URL}${endpoint}`, {
                 method: 'PUT',
                 headers: this.getHeaders(includeAuth),
-                body: JSON.stringify(data)
+                body: dataToSend
             });
 
             if (!response.ok) {
