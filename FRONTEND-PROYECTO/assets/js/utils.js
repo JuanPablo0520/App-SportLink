@@ -43,43 +43,81 @@ const AuthManager = {
         return !!this.getToken();
     },
 
-    // Cerrar sesión
+    // Cerrar sesión - ACTUALIZADO
     logout() {
-        localStorage.removeItem(CONFIG.TOKEN_KEY);
-        localStorage.removeItem(CONFIG.USER_KEY);
-        this.updateUIAuthentication();
+        UIHelpers.showConfirmModal(
+            'Cerrar sesión',
+            '¿Estás seguro que deseas cerrar sesión?',
+            () => {
+                localStorage.removeItem(CONFIG.TOKEN_KEY);
+                localStorage.removeItem(CONFIG.USER_KEY);
+                UIHelpers.showToast('Sesión cerrada exitosamente', 'success');
+                
+                // Redirigir a index después de un momento
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }
+        );
     },
 
-    // Actualizar UI según estado de autenticación
+    // Actualizar UI según estado de autenticación - ACTUALIZADO
     updateUIAuthentication() {
+        const user = this.getUser();
+        const isAuthenticated = this.isAuthenticated();
+
         const authButtons = document.getElementById('auth-buttons');
         const userMenu = document.getElementById('user-menu');
-        
-        if (this.isAuthenticated()) {
-            authButtons?.classList.add('d-none');
-            userMenu?.classList.remove('d-none');
-            userMenu?.classList.add('d-flex');
-            
-            // Actualizar nombre de usuario si está disponible
-            const user = this.getUser();
-            if (user && user.name) {
-                const userNameElement = document.querySelector('#userDropdown');
-                if (userNameElement) {
-                    userNameElement.innerHTML = `<i class="bi bi-person-circle me-1"></i> ${user.name}`;
-                }
+
+        if (isAuthenticated && user) {
+            // Ocultar botones de login/registro
+            if (authButtons) {
+                authButtons.classList.add('d-none');
             }
+
+            // Mostrar menú de usuario
+            if (userMenu) {
+                userMenu.classList.remove('d-none');
+                userMenu.classList.add('d-flex');
+            }
+
+            // Actualizar nombre en navbar si existe
+            const userNameElement = document.querySelector('#userDropdown');
+            if (userNameElement && user.nombres) {
+                userNameElement.innerHTML = `<i class="bi bi-person-circle me-1"></i> ${user.nombres}`;
+            }
+
+            // Redirigir según tipo de usuario si está en index.html
+            if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+                if (user.tipoUsuario === 'entrenador') {
+                    // Redirigir a dashboard de entrenador
+                    window.location.href = 'dashboard-entrenador.html';
+                }
+                // Los clientes se quedan en index.html
+            }
+
         } else {
-            authButtons?.classList.remove('d-none');
-            userMenu?.classList.remove('d-flex');
-            userMenu?.classList.add('d-none');
+            // Mostrar botones de login/registro
+            if (authButtons) {
+                authButtons.classList.remove('d-none');
+            }
+
+            // Ocultar menú de usuario
+            if (userMenu) {
+                userMenu.classList.add('d-none');
+                userMenu.classList.remove('d-flex');
+            }
         }
     },
 
-    // Verificar si se debe redirigir al login
+    // Verificar si se debe redirigir al login - ACTUALIZADO
     requireAuth(redirectToLogin = true) {
         if (!this.isAuthenticated()) {
             if (redirectToLogin) {
-                window.location.href = 'index.html';
+                UIHelpers.showToast('Debes iniciar sesión para acceder a esta página', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
             }
             return false;
         }
@@ -146,8 +184,8 @@ const ApiClient = {
 
     // PUT request
     async put(endpoint, data = {}, includeAuth = false) {
-        dataToSend = JSON.stringify(data)
-        console.log("data enviada", dataToSend)
+        const dataToSend = JSON.stringify(data);
+        console.log("data enviada", dataToSend);
         
         try {
             const response = await fetch(`${CONFIG.API_BASE_URL}${endpoint}`, {
@@ -215,7 +253,7 @@ const Validator = {
     // Validar formulario completo
     validateForm(formElement) {
         let isValid = true;
-        const inputs = formElement.querySelectorAll('input[required], select[required]');
+        const inputs = formElement.querySelectorAll('input[required], select[required], textarea[required]');
 
         inputs.forEach(input => {
             if (!this.validateInput(input)) {
@@ -337,23 +375,27 @@ const UIHelpers = {
         });
     },
 
-    // Mostrar modal de confirmación
-    showConfirmModal(title, message, onConfirm) {
-        const modalId = 'confirm-modal-' + Date.now();
+    // Mostrar modal de confirmación - ACTUALIZADO
+    showConfirmModal(title, message, onConfirm, type = 'primary') {
+        // Eliminar modal existente si hay uno
+        const existingModal = document.getElementById('confirmModal');
+        if (existingModal) existingModal.remove();
+
+        // Crear modal dinámicamente
         const modalHTML = `
-            <div class="modal fade" id="${modalId}" tabindex="-1">
-                <div class="modal-dialog">
+            <div class="modal fade" id="confirmModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
-                        <div class="modal-header">
+                        <div class="modal-header bg-${type} text-white">
                             <h5 class="modal-title">${title}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            ${message}
+                            <p>${message}</p>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary" id="${modalId}-confirm">Confirmar</button>
+                            <button type="button" class="btn btn-${type}" id="confirmBtn">Confirmar</button>
                         </div>
                     </div>
                 </div>
@@ -362,20 +404,18 @@ const UIHelpers = {
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        const modalElement = document.getElementById(modalId);
-        const modal = new bootstrap.Modal(modalElement);
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
         
-        // Event listener para confirmar
-        document.getElementById(`${modalId}-confirm`).addEventListener('click', () => {
+        document.getElementById('confirmBtn').addEventListener('click', () => {
             modal.hide();
             if (typeof onConfirm === 'function') {
                 onConfirm();
             }
         });
 
-        // Remover modal del DOM cuando se oculte
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            modalElement.remove();
+        // Limpiar modal del DOM al cerrarse
+        document.getElementById('confirmModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
         });
 
         modal.show();
@@ -438,21 +478,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            UIHelpers.showConfirmModal(
-                'Cerrar sesión',
-                '¿Estás seguro que deseas cerrar sesión?',
-                function() {
-                    AuthManager.logout();
-                    window.location.href = 'index.html';
-                }
-            );
+            AuthManager.logout();
         });
     }
 
     // Validación en tiempo real para todos los formularios
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
-        const inputs = form.querySelectorAll('input, select');
+        const inputs = form.querySelectorAll('input, select, textarea');
         inputs.forEach(input => {
             // Validar en blur (cuando pierde el foco)
             input.addEventListener('blur', () => {
@@ -479,11 +512,3 @@ document.addEventListener('DOMContentLoaded', function() {
         input.min = today;
     });
 });
-
-// ==================== EXPORTAR FUNCIONES GLOBALES ====================
-// Para compatibilidad con scripts que esperen funciones globales
-window.AuthManager = AuthManager;
-window.ApiClient = ApiClient;
-window.Validator = Validator;
-window.UIHelpers = UIHelpers;
-window.CONFIG = CONFIG;

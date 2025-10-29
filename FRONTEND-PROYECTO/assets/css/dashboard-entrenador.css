@@ -1,0 +1,379 @@
+/* assets/css/dashboard-entrenador.css - Estilos para dashboard de entrenador */
+
+/* Hero Section para Entrenador */
+.trainer-hero-section {
+    background: linear-gradient(135deg, rgba(46, 139, 87, 0.95), rgba(26, 62, 47, 0.95)), 
+                url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 3rem;
+    border-bottom: 4px solid var(--secondary-color);
+}
+
+.trainer-hero-section .hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.trainer-hero-section .hero-title span {
+    color: var(--secondary-color);
+}
+
+.trainer-hero-section .hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+/* Estadísticas */
+.stats-section {
+    margin-top: -50px;
+    position: relative;
+    z-index: 10;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(46, 139, 87, 0.1);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(46, 139, 87, 0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-icon.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), #237347);
+}
+
+.stat-icon.bg-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.stat-icon.bg-warning {
+    background: linear-gradient(135deg, var(--secondary-color), #e69500);
+}
+
+.stat-icon.bg-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.stat-content p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.dashboard-card .card-header {
+    background: linear-gradient(135deg, rgba(46, 139, 87, 0.05), rgba(255, 165, 0, 0.05));
+    border-bottom: 2px solid rgba(46, 139, 87, 0.1);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+}
+
+.dashboard-card .card-header i {
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+}
+
+.dashboard-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Sesión Item */
+.sesion-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.sesion-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 3px 10px rgba(46, 139, 87, 0.1);
+}
+
+.sesion-item:last-child {
+    margin-bottom: 0;
+}
+
+.sesion-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.sesion-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.sesion-cliente {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.sesion-info {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.sesion-info i {
+    color: var(--primary-color);
+    margin-right: 0.25rem;
+}
+
+.badge-estado {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-confirmada {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-pendiente {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.badge-cancelada {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Reseña Item */
+.resena-item {
+    background: #f8f9fa;
+    border-left: 3px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.resena-item:last-child {
+    margin-bottom: 0;
+}
+
+.resena-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.resena-cliente {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.resena-estrellas {
+    color: #ffc107;
+}
+
+.resena-fecha {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.resena-texto {
+    font-size: 0.9rem;
+    color: #495057;
+    margin: 0.5rem 0;
+}
+
+.resena-acciones {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Servicio Item */
+.servicio-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.servicio-item:hover {
+    border-color: var(--secondary-color);
+    box-shadow: 0 3px 10px rgba(255, 165, 0, 0.1);
+}
+
+.servicio-item:last-child {
+    margin-bottom: 0;
+}
+
+.servicio-nombre {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.servicio-precio {
+    color: var(--secondary-color);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.servicio-deporte {
+    display: inline-block;
+    background-color: rgba(46, 139, 87, 0.1);
+    color: var(--primary-color);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* Alertas y Recordatorios */
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert i {
+    margin-right: 0.5rem;
+}
+
+/* Empty State */
+.empty-state-dashboard {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state-dashboard i {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.empty-state-dashboard h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-dashboard p {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+/* Navegación activa */
+.nav-link.active {
+    color: var(--primary-color) !important;
+    font-weight: 600;
+}
+
+.nav-link {
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .trainer-hero-section {
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .trainer-hero-section .hero-title {
+        font-size: 1.8rem;
+    }
+    
+    .trainer-hero-section .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .stats-section {
+        margin-top: -30px;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .stat-content h3 {
+        font-size: 1.5rem;
+    }
+    
+    .sesion-info {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .dashboard-card .card-body {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .trainer-hero-section .row {
+        text-align: center;
+    }
+    
+    .trainer-hero-section .col-md-4 {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+}

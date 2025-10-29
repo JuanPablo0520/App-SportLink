@@ -1,0 +1,368 @@
+/* assets/css/servicios-entrenador.css - Estilos para gestión de servicios */
+
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), #1a3e2f);
+    color: white;
+    padding: 2.5rem 0;
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.page-title i {
+    color: var(--secondary-color);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Filter Card */
+.filter-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+}
+
+.filter-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Servicio Card */
+.servicio-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    background: white;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.servicio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(46, 139, 87, 0.15);
+}
+
+.servicio-card-header {
+    background: linear-gradient(135deg, rgba(46, 139, 87, 0.1), rgba(255, 165, 0, 0.1));
+    padding: 1.5rem;
+    border-bottom: 2px solid rgba(46, 139, 87, 0.2);
+    position: relative;
+}
+
+.servicio-status-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.servicio-status-badge.activo {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.servicio-status-badge.inactivo {
+    background-color: #6c757d;
+    color: white;
+}
+
+.servicio-nombre {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    padding-right: 100px;
+}
+
+.servicio-deporte-tag {
+    display: inline-block;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.servicio-card-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.servicio-descripcion {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+    line-height: 1.6;
+}
+
+.servicio-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.servicio-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.servicio-info-item i {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.servicio-info-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.servicio-precio-destacado {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    text-align: center;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 165, 0, 0.05));
+    border-radius: 8px;
+}
+
+.servicio-card-footer {
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.servicio-card-footer .btn {
+    flex: 1;
+    min-width: 100px;
+}
+
+/* Botones de acción */
+.btn-editar {
+    background: linear-gradient(135deg, var(--primary-color), #237347);
+    border: none;
+    color: white;
+}
+
+.btn-editar:hover {
+    background: linear-gradient(135deg, #237347, var(--primary-color));
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-toggle-estado {
+    background-color: #ffc107;
+    border: none;
+    color: #000;
+}
+
+.btn-toggle-estado:hover {
+    background-color: #e0a800;
+    color: #000;
+}
+
+.btn-eliminar {
+    background-color: #dc3545;
+    border: none;
+    color: white;
+}
+
+.btn-eliminar:hover {
+    background-color: #c82333;
+    color: white;
+}
+
+/* Empty State */
+.empty-state-servicios {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.empty-state-servicios i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state-servicios h3 {
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.empty-state-servicios p {
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+/* Modal personalizado */
+#servicioModal .modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+#servicioModal .modal-header {
+    background: linear-gradient(135deg, var(--primary-color), #237347);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem;
+}
+
+#servicioModal .modal-title {
+    font-weight: 600;
+}
+
+#servicioModal .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+#servicioModal .modal-body {
+    padding: 2rem;
+}
+
+#servicioModal .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+#servicioModal .form-control,
+#servicioModal .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 0.6rem 0.75rem;
+}
+
+#servicioModal .form-control:focus,
+#servicioModal .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(46, 139, 87, 0.15);
+}
+
+#servicioModal .form-switch .form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    cursor: pointer;
+}
+
+#servicioModal .form-switch .form-check-input:checked {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.servicio-card {
+    animation: slideInUp 0.5s ease-out;
+}
+
+.servicio-card:nth-child(1) { animation-delay: 0.1s; }
+.servicio-card:nth-child(2) { animation-delay: 0.2s; }
+.servicio-card:nth-child(3) { animation-delay: 0.3s; }
+.servicio-card:nth-child(4) { animation-delay: 0.4s; }
+.servicio-card:nth-child(5) { animation-delay: 0.5s; }
+.servicio-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 2rem 0;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .page-header .row {
+        text-align: center;
+    }
+    
+    .page-header .col-md-4 {
+        margin-top: 1rem;
+        text-align: center !important;
+    }
+    
+    .servicio-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .servicio-card-footer {
+        flex-direction: column;
+    }
+    
+    .servicio-card-footer .btn {
+        width: 100%;
+    }
+    
+    .servicio-nombre {
+        font-size: 1.1rem;
+        padding-right: 0;
+        margin-bottom: 0.75rem;
+    }
+    
+    .servicio-status-badge {
+        position: static;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .servicio-precio-destacado {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .filter-card .row {
+        gap: 0.5rem;
+    }
+    
+    #servicioModal .modal-body {
+        padding: 1.5rem;
+    }
+}

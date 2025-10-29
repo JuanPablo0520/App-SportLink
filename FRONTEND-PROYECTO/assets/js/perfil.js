@@ -11,6 +11,8 @@ class PerfilPageManager {
         this.init();
     }
 
+    /* REEMPLAZAR la función init() en assets/js/perfil.js */
+
     init() {
         // Verificar autenticación
         if (!AuthManager.requireAuth()) {
@@ -18,6 +20,13 @@ class PerfilPageManager {
         }
 
         this.currentUser = AuthManager.getUser();
+    
+        // Redirigir a perfil de entrenador si corresponde
+        if (this.currentUser.tipoUsuario === 'entrenador') {
+            window.location.href = 'perfil-entrenador.html';
+            return;
+        }
+    
         this.initializeEventListeners();
         this.loadUserProfile();
         this.loadScheduledSessions();

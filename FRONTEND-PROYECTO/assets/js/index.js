@@ -93,11 +93,10 @@ class IndexPageManager {
             } catch (err) {
                 console.warn("No se encontró cliente, intentando como entrenador...");
             }
-            console.log(user)
+
             // 2. Si no es Cliente, intentar login como Entrenador
             if (!user) {
                 try {
-            
                     const idEntrenador = await ApiClient.get(`/Entrenador/login/${email}/${password}`);
                     if (idEntrenador) {
                         const entrenador = await ApiClient.get(`/Entrenador/obtener/${idEntrenador}`);
@@ -112,10 +111,10 @@ class IndexPageManager {
 
             // 3. Si no encontró nada
             if (!user) {
-                throw new Error("Correo o contraseña incorrectos, usuario no encontrado");
+                throw new Error("Correo o contraseña incorrectos");
             }
 
-            // 4. Guardar sesión
+            // 4. Guardar sesión con tipo de usuario
             AuthManager.login("fakeToken", { ...user, tipoUsuario });
 
             // Cerrar modal
@@ -123,10 +122,18 @@ class IndexPageManager {
             modal.hide();
 
             // Mostrar mensaje de éxito
-            UIHelpers.showToast(`¡Bienvenido ${tipoUsuario}: ${user.nombres}!`, 'success');
+            const nombreMostrar = user.nombres || user.nombre || 'Usuario';
+            UIHelpers.showToast(`¡Bienvenido ${nombreMostrar}!`, 'success');
 
-            // Actualizar UI según tipo de usuario
-            AuthManager.updateUIAuthentication();
+            // Redirigir según tipo de usuario
+            setTimeout(() => {
+                if (tipoUsuario === 'entrenador') {
+                    window.location.href = 'dashboard-entrenador.html';
+                } else {
+                    // Los clientes se quedan en index.html
+                    AuthManager.updateUIAuthentication();
+                }
+            }, 1000);
 
         } catch (error) {
             console.error("Login error:", error);

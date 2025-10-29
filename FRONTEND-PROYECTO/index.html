@@ -255,158 +255,279 @@
 
     <!-- Modal de Registro Cliente -->
     <div class="modal fade" id="registerClientModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Registro como cliente</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registro como cliente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="registerClientForm">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="clientFirstName" class="form-label">Nombres</label>
+                  <input type="text" class="form-control" id="clientFirstName" required>
+                  <div class="invalid-feedback"></div>
                 </div>
-                <div class="modal-body">
-                    <form id="registerClientForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="clientFirstName" class="form-label">Nombres</label>
-                                <input type="text" class="form-control" id="clientFirstName" required>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="clientLastName" class="form-label">Apellidos</label>
-                                <input type="text" class="form-control" id="clientLastName" required>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="clientEmail" class="form-label">Correo electrónico</label>
-                            <input type="email" class="form-control" id="clientEmail" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="clientPhone" class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" id="clientPhone" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="clientPassword" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="clientPassword" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="clientConfirmPassword" class="form-label">Confirmar contraseña</label>
-                            <input type="password" class="form-control" id="clientConfirmPassword" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="clientLocation" class="form-label">Localidad donde buscas entrenar</label>
-                            <select class="form-select" id="clientLocation" required>
-                                <option value="" selected disabled>Seleccionar localidad</option>
-                                <option>Usaquén</option>
-                                <option>Chapinero</option>
-                                <option>Santa Fe</option>
-                                <option>San Cristóbal</option>
-                                <option>Usme</option>
-                                <option>Tunjuelito</option>
-                                <option>Bosa</option>
-                                <option>Kennedy</option>
-                                <option>Fontibón</option>
-                                <option>Engativá</option>
-                                <option>Suba</option>
-                                <option>Barrios Unidos</option>
-                                <option>Teusaquillo</option>
-                                <option>Los Mártires</option>
-                                <option>Antonio Nariño</option>
-                                <option>Puente Aranda</option>
-                                <option>La Candelaria</option>
-                                <option>Rafael Uribe Uribe</option>
-                                <option>Ciudad Bolívar</option>
-                                <option>Sumapaz</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <span class="spinner-border spinner-border-sm d-none me-2" id="registerClientSpinner"></span>
-                                Registrarse
-                            </button>
-                        </div>
-                    </form>
+                <div class="col-md-6 mb-3">
+                  <label for="clientLastName" class="form-label">Apellidos</label>
+                  <input type="text" class="form-control" id="clientLastName" required>
+                  <div class="invalid-feedback"></div>
                 </div>
-            </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="clientEmail" class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control" id="clientEmail" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="clientPhone" class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" id="clientPhone" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="clientPassword" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="clientPassword" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="clientConfirmPassword" class="form-label">Confirmar contraseña</label>
+                <input type="password" class="form-control" id="clientConfirmPassword" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="clientLocation" class="form-label">Localidad donde buscas entrenar</label>
+                <select class="form-select" id="clientLocation" required>
+                  <option value="" selected disabled>Seleccionar localidad</option>
+                  <option>Usaquén</option>
+                  <option>Chapinero</option>
+                  <option>Santa Fe</option>
+                  <option>San Cristóbal</option>
+                  <option>Usme</option>
+                  <option>Tunjuelito</option>
+                  <option>Bosa</option>
+                  <option>Kennedy</option>
+                  <option>Fontibón</option>
+                  <option>Engativá</option>
+                  <option>Suba</option>
+                  <option>Barrios Unidos</option>
+                  <option>Teusaquillo</option>
+                  <option>Los Mártires</option>
+                  <option>Antonio Nariño</option>
+                  <option>Puente Aranda</option>
+                  <option>La Candelaria</option>
+                  <option>Rafael Uribe Uribe</option>
+                  <option>Ciudad Bolívar</option>
+                  <option>Sumapaz</option>
+                </select>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <!-- Checkbox de aceptación -->
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="clientTerms" required>
+                <label class="form-check-label" for="clientTerms">
+                  Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">términos y condiciones</a>.
+                </label>
+                <div class="invalid-feedback">Debes aceptar los términos antes de continuar.</div>
+              </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                  <span class="spinner-border spinner-border-sm d-none me-2" id="registerClientSpinner"></span>
+                  Registrarse
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Modal de Registro Entrenador -->
     <div class="modal fade" id="registerTrainerModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Registro como entrenador</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registro como entrenador</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="registerTrainerForm">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="trainerFirstName" class="form-label">Nombres</label>
+                  <input type="text" class="form-control" id="trainerFirstName" required>
+                  <div class="invalid-feedback"></div>
                 </div>
-                <div class="modal-body">
-                    <form id="registerTrainerForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="trainerFirstName" class="form-label">Nombres</label>
-                                <input type="text" class="form-control" id="trainerFirstName" required>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="trainerLastName" class="form-label">Apellidos</label>
-                                <input type="text" class="form-control" id="trainerLastName" required>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerEmail" class="form-label">Correo electrónico</label>
-                            <input type="email" class="form-control" id="trainerEmail" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerPhone" class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" id="trainerPhone" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerPassword" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="trainerPassword" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerConfirmPassword" class="form-label">Confirmar contraseña</label>
-                            <input type="password" class="form-control" id="trainerConfirmPassword" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerSpecialty" class="form-label">Especialidad deportiva</label>
-                            <input type="text" class="form-control" id="trainerSpecialty" placeholder="Ej: Fútbol, natación, etc." required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerLocation" class="form-label">Ubicación</label>
-                            <input type="text" class="form-control" id="trainerLocation" placeholder="Ej: Chapinero, Suba, etc." required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerCertifications" class="form-label">Certificaciones (PDF)</label>
-                            <input type="file" class="form-control" id="trainerCertifications" accept="application/pdf">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="trainerBackground" class="form-label">Antecedentes judiciales</label>
-                            <input type="file" class="form-control" id="trainerBackground" accept="application/pdf">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success">
-                                <span class="spinner-border spinner-border-sm d-none me-2" id="registerTrainerSpinner"></span>
-                                Registrarse como entrenador
-                            </button>
-                        </div>
-                    </form>
+                <div class="col-md-6 mb-3">
+                  <label for="trainerLastName" class="form-label">Apellidos</label>
+                  <input type="text" class="form-control" id="trainerLastName" required>
+                  <div class="invalid-feedback"></div>
                 </div>
-            </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerEmail" class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control" id="trainerEmail" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerPhone" class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" id="trainerPhone" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerPassword" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="trainerPassword" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerConfirmPassword" class="form-label">Confirmar contraseña</label>
+                <input type="password" class="form-control" id="trainerConfirmPassword" required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerSpecialty" class="form-label">Especialidad deportiva</label>
+                <input type="text" class="form-control" id="trainerSpecialty" placeholder="Ej: Fútbol, natación, etc." required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerLocation" class="form-label">Ubicación</label>
+                <input type="text" class="form-control" id="trainerLocation" placeholder="Ej: Chapinero, Suba, etc." required>
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerCertifications" class="form-label">Certificaciones (PDF)</label>
+                <input type="file" class="form-control" id="trainerCertifications" accept="application/pdf">
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="trainerBackground" class="form-label">Antecedentes judiciales</label>
+                <input type="file" class="form-control" id="trainerBackground" accept="application/pdf">
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <!-- Checkbox de aceptación -->
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="trainerTerms" required>
+                <label class="form-check-label" for="trainerTerms">
+                  Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">términos y condiciones</a>.
+                </label>
+                <div class="invalid-feedback">Debes aceptar los términos antes de continuar.</div>
+              </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-success">
+                  <span class="spinner-border spinner-border-sm d-none me-2" id="registerTrainerSpinner"></span>
+                  Registrarse como entrenador
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
     </div>
+
+    <!-- Modal de Términos y Condiciones -->
+    <div class="modal fade" id="termsModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Términos y Condiciones</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <h4 class="text-center mb-3">Proyecto Sportlink</h4>
+                <p>
+                De conformidad con lo establecido en la <strong>Ley 1581 de 2012</strong>, el <strong>Decreto Reglamentario 1377 de 2013</strong>, 
+                la <strong>Circular Externa 002 de 2015</strong> expedida por la Superintendencia de Industria y Comercio, y demás normas concordantes 
+                que regulan la protección de datos personales en Colombia, yo, el titular de los datos personales, declaro de manera libre, voluntaria, 
+                previa, explícita, informada e inequívoca que:
+                </p>
+
+                <p>
+                Autorizo a los representantes del <strong>Proyecto Sportlink</strong>, identificados como <strong>Juan Montes, Andrés Rodríguez y Julián Grosso</strong>, 
+                para que realicen la recolección, almacenamiento, uso, circulación, supresión y, en general, el tratamiento de mis datos personales 
+                que he suministrado o suministraré en el marco del Proyecto Sportlink.
+                </p>
+
+                <p>
+                Esta autorización se extiende durante el tiempo necesario para cumplir con las finalidades descritas a continuación, así como durante 
+                la vigencia de cualquier relación contractual, comercial o de servicios que surja, y con posterioridad a su terminación, siempre que 
+                el tratamiento esté relacionado con dichas finalidades.
+                </p>
+
+                <h5 class="mt-3">Finalidades del tratamiento de datos personales</h5>
+                <p>Los datos personales serán tratados para las siguientes finalidades específicas del Proyecto Sportlink:</p>
+                <ul>
+                  <li>Gestionar el registro y participación de usuarios en actividades deportivas y de vinculación.</li>
+                  <li>Realizar análisis estadísticos para mejorar los servicios ofrecidos.</li>
+                  <li>Cumplir con obligaciones legales y regulatorias.</li>
+                  <li>Otras finalidades derivadas del proyecto, como compartir datos con aliados para fines deportivos (si aplica).</li>
+                </ul>
+
+                <h5 class="mt-3">Derechos del titular de los datos personales</h5>
+                <p>
+                Declaro que he sido informado sobre mis derechos como titular de los datos personales, conforme a la Constitución Política de Colombia, 
+                la Ley 1581 de 2012 y normas concordantes, los cuales incluyen:
+                </p>
+                <ul>
+                  <li>Conocer, actualizar y rectificar mis datos personales frente al Responsable o Encargados del tratamiento.</li>
+                  <li>Solicitar prueba de la autorización otorgada.</li>
+                  <li>Ser informado, previa solicitud, sobre el uso dado a mis datos personales.</li>
+                  <li>Presentar quejas ante la Superintendencia de Industria y Comercio por infracciones al régimen de protección de datos.</li>
+                  <li>Revocar esta autorización y/o solicitar la supresión de mis datos cuando no se respeten los principios, derechos y garantías constitucionales y legales.</li>
+                  <li>Acceder de forma gratuita a mis datos personales que hayan sido objeto de tratamiento.</li>
+                </ul>
+
+                <h5 class="mt-3">Canales de contacto para ejercer derechos</h5>
+                <p>
+                Para ejercer estos derechos, podré dirigirme al Responsable a través de los siguientes canales:
+                </p>
+                <ul>
+                  <li>Correo electrónico: <a href="mailto:correo@ejemplo.com">correo@ejemplo.com</a></li>
+                  <li>Teléfono: [Número de teléfono]</li>
+                </ul>
+
+                <h5 class="mt-3">Política de tratamiento de datos</h5>
+                <p>
+                La política de tratamiento de datos personales del Proyecto Sportlink se encuentra disponible en 
+                <a href="#" target="_blank">[indicar ubicación, e.g., sitio web o documento adjunto]</a>, y he tenido acceso a ella previo a otorgar esta autorización.
+                </p>
+
+                <p>
+                Manifiesto que la presente autorización me fue presentada antes de entregar mis datos y que la acepto sin coacción alguna, 
+                mediante la marcación de la casilla de verificación correspondiente en el documento o formulario proporcionado, 
+                el cual ya contiene mis datos personales suministrados previamente.
+                </p>
+
+                <p class="mt-3"><em>
+                Nota: Al marcar la casilla, se considera otorgada la autorización de manera explícita. 
+                Esta plantilla asume que los datos personales del titular (nombre, documento de identificación, etc.) se capturan 
+                en un formulario y se asocian automáticamente a esta aceptación.
+                </em></p>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Footer -->
     <footer class="text-center text-lg-start">

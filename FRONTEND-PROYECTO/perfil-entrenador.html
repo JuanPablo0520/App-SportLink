@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - SportLink Entrenador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/perfil.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="dashboard-entrenador.html">
+                <i class="bi bi-joystick"></i> SportLink Colombia
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard-entrenador.html">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="servicios-entrenador.html">
+                            <i class="bi bi-briefcase"></i> Mis Servicios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="sesiones-entrenador.html">
+                            <i class="bi bi-calendar-check"></i> Sesiones
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle me-1"></i> Mi Cuenta
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item active" href="perfil-entrenador.html">Mi perfil</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logout-btn">Cerrar sesión</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenedor principal del perfil -->
+    <div class="profile-container">
+        <!-- Botón para volver -->
+        <a href="dashboard-entrenador.html" class="btn btn-outline-secondary back-btn">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+        
+        <!-- Encabezado del perfil -->
+        <div class="profile-header trainer-profile-header">
+            <div class="profile-avatar-container">
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar" class="profile-avatar" id="profileAvatar">
+                <button class="btn btn-sm btn-outline-light avatar-change-btn" id="changeAvatarBtn">
+                    <i class="bi bi-camera"></i>
+                </button>
+            </div>
+            <h2 id="profileName">Cargando...</h2>
+            <p class="mb-2" id="memberSince">Miembro desde: Cargando...</p>
+            <div class="trainer-specialties" id="trainerSpecialties">
+                <!-- Especialidades se cargarán dinámicamente -->
+            </div>
+        </div>
+        
+        <!-- Estadísticas del Entrenador -->
+        <div class="trainer-stats">
+            <div class="trainer-stat-card">
+                <i class="bi bi-briefcase"></i>
+                <div class="stat-number" id="statServicios">0</div>
+                <div class="stat-label">Servicios Activos</div>
+            </div>
+            <div class="trainer-stat-card">
+                <i class="bi bi-calendar-check"></i>
+                <div class="stat-number" id="statSesiones">0</div>
+                <div class="stat-label">Sesiones Totales</div>
+            </div>
+            <div class="trainer-stat-card">
+                <i class="bi bi-star-fill"></i>
+                <div class="stat-number" id="statCalificacion">0.0</div>
+                <div class="stat-label">Calificación</div>
+            </div>
+            <div class="trainer-stat-card">
+                <i class="bi bi-chat-quote"></i>
+                <div class="stat-number" id="statResenias">0</div>
+                <div class="stat-label">Reseñas</div>
+            </div>
+        </div>
+        
+        <!-- Pestañas de navegación -->
+        <ul class="nav nav-tabs" id="perfilTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                    <i class="bi bi-person"></i> Información Personal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="certificaciones-tab" data-bs-toggle="tab" data-bs-target="#certificaciones" type="button" role="tab">
+                    <i class="bi bi-file-earmark-check"></i> Certificaciones
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="resenias-tab" data-bs-toggle="tab" data-bs-target="#resenias" type="button" role="tab">
+                    <i class="bi bi-star"></i> Reseñas Recibidas
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las pestañas -->
+        <div class="tab-content" id="perfilTabsContent">
+            <!-- Información Personal -->
+            <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                <h4 class="mb-4">Información personal</h4>
+                <form id="profileForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="firstName" class="form-label">Nombres *</label>
+                            <input type="text" class="form-control" id="firstName" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="lastName" class="form-label">Apellidos *</label>
+                            <input type="text" class="form-control" id="lastName" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Correo electrónico *</label>
+                            <input type="email" class="form-control" id="email" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="phone">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <!-- Especialidades -->
+                    <div class="mb-3">
+                        <label class="form-label">Especialidades Deportivas *</label>
+                        <div id="especialidadesContainer">
+                            <!-- Especialidades se cargarán aquí -->
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addEspecialidadBtn">
+                            <i class="bi bi-plus-circle"></i> Agregar Especialidad
+                        </button>
+                    </div>
+
+                    <!-- Biografía -->
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Acerca de mí (Biografía profesional)</label>
+                        <textarea class="form-control" id="bio" rows="4" 
+                            placeholder="Describe tu experiencia, metodología de entrenamiento, logros, etc."></textarea>
+                        <small class="text-muted">Esta información será visible para los clientes</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <button type="button" class="btn btn-outline-secondary me-md-2" id="cancelChangesBtn">
+                            Cancelar cambios
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="spinner-border spinner-border-sm d-none me-2" id="saveSpinner"></span>
+                            Guardar cambios
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Sección de cambio de contraseña -->
+                <div class="mt-5 pt-4 border-top">
+                    <h5 class="mb-3">Cambiar contraseña</h5>
+                    <form id="passwordForm">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="currentPassword" class="form-label">Contraseña actual</label>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="newPassword" class="form-label">Nueva contraseña</label>
+                                <input type="password" class="form-control" id="newPassword" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="confirmNewPassword" class="form-label">Confirmar nueva contraseña</label>
+                                <input type="password" class="form-control" id="confirmNewPassword" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-warning">
+                                <span class="spinner-border spinner-border-sm d-none me-2" id="passwordSpinner"></span>
+                                Cambiar contraseña
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Certificaciones y Documentos -->
+            <div class="tab-pane fade" id="certificaciones" role="tabpanel" aria-labelledby="certificaciones-tab">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Mis Certificaciones</h4>
+                    <button class="btn btn-primary" id="addCertificacionBtn">
+                        <i class="bi bi-plus-circle"></i> Agregar Certificación
+                    </button>
+                </div>
+                
+                <div id="certificacionesContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando certificaciones...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reseñas Recibidas -->
+            <div class="tab-pane fade" id="resenias" role="tabpanel" aria-labelledby="resenias-tab">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Reseñas de mis clientes</h4>
+                    <div>
+                        <span class="badge bg-warning text-dark me-2">
+                            <i class="bi bi-star-fill"></i> <span id="promedioResenias">0.0</span>
+                        </span>
+                        <span class="text-muted">(<span id="totalResenias">0</span> reseñas)</span>
+                    </div>
+                </div>
+                
+                <div id="reseniasContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando reseñas...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para cambio de avatar -->
+    <div class="modal fade" id="avatarModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar foto de perfil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <input type="file" id="avatarFile" accept="image/*" class="d-none">
+                    <div class="mb-3">
+                        <img id="avatarPreview" src="" alt="Preview" class="rounded-circle" 
+                            style="width: 120px; height: 120px; object-fit: cover; display: none;">
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('avatarFile').click()">
+                        <i class="bi bi-cloud-upload"></i> Seleccionar imagen
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveAvatarBtn" disabled>
+                        <span class="spinner-border spinner-border-sm d-none me-2" id="avatarSpinner"></span>
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar certificación -->
+    <div class="modal fade" id="certificacionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Certificación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="certificacionForm">
+                        <div class="mb-3">
+                            <label for="certNombre" class="form-label">Nombre de la certificación *</label>
+                            <input type="text" class="form-control" id="certNombre" 
+                                placeholder="Ej: Certificación Internacional de Entrenador de Fútbol" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="certInstitucion" class="form-label">Institución emisora *</label>
+                            <input type="text" class="form-control" id="certInstitucion" 
+                                placeholder="Ej: FIFA, CONMEBOL, etc." required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="certFecha" class="form-label">Fecha de emisión</label>
+                            <input type="date" class="form-control" id="certFecha">
+                        </div>
+                        <div class="mb-3">
+                            <label for="certArchivo" class="form-label">Documento (PDF) *</label>
+                            <input type="file" class="form-control" id="certArchivo" accept=".pdf" required>
+                            <small class="text-muted">Solo archivos PDF, máximo 5MB</small>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="spinner-border spinner-border-sm d-none me-2" id="certSpinner"></span>
+                                Guardar Certificación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/perfil-entrenador.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Dashboard - SportLink Entrenador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/dashboard-entrenador.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="dashboard-entrenador.html">
+                <i class="bi bi-joystick"></i> SportLink Colombia
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard-entrenador.html">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="servicios-entrenador.html">
+                            <i class="bi bi-briefcase"></i> Mis Servicios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="sesiones-entrenador.html">
+                            <i class="bi bi-calendar-check"></i> Sesiones
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle me-1"></i> Mi Cuenta
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="perfil.html">Mi perfil</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logout-btn">Cerrar sesión</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section para Entrenador -->
+    <section class="trainer-hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="hero-title mb-3">Bienvenido, <span id="trainerName">Entrenador</span></h1>
+                    <p class="hero-subtitle">Gestiona tus servicios, sesiones y clientes desde aquí</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="servicios-entrenador.html?action=create" class="btn btn-warning btn-lg">
+                        <i class="bi bi-plus-circle"></i> Crear Nuevo Servicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estadísticas Rápidas -->
+    <section class="container stats-section">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statSesionesPendientes">0</h3>
+                        <p>Sesiones Pendientes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-briefcase"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statServiciosActivos">0</h3>
+                        <p>Servicios Activos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statClientesTotales">0</h3>
+                        <p>Clientes Totales</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statCalificacion">0.0</h3>
+                        <p>Calificación Promedio</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contenido Principal -->
+    <section class="container main-content">
+        <div class="row g-4">
+            <!-- Próximas Sesiones -->
+            <div class="col-lg-8">
+                <div class="card dashboard-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Próximas Sesiones</h5>
+                        <a href="sesiones-entrenador.html" class="btn btn-sm btn-outline-primary">Ver todas</a>
+                    </div>
+                    <div class="card-body" id="proximasSesionesContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reseñas Recientes -->
+                <div class="card dashboard-card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-chat-quote"></i> Reseñas Recientes</h5>
+                        <span class="badge bg-info" id="badgeNuevasResenias">0 nuevas</span>
+                    </div>
+                    <div class="card-body" id="resenasRecientesContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Mis Servicios -->
+                <div class="card dashboard-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-briefcase"></i> Mis Servicios</h5>
+                        <a href="servicios-entrenador.html" class="btn btn-sm btn-outline-primary">Gestionar</a>
+                    </div>
+                    <div class="card-body" id="misServiciosContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recordatorios -->
+                <div class="card dashboard-card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-bell"></i> Recordatorios</h5>
+                    </div>
+                    <div class="card-body" id="recordatoriosContainer">
+                        <div class="alert alert-info mb-2">
+                            <small><i class="bi bi-info-circle"></i> Tienes <strong>2 sesiones</strong> programadas para hoy</small>
+                        </div>
+                        <div class="alert alert-warning mb-0">
+                            <small><i class="bi bi-exclamation-triangle"></i> <strong>3 reseñas</strong> sin responder</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones Rápidas -->
+                <div class="card dashboard-card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-lightning"></i> Acciones Rápidas</h5>
+                    </div>
+                    <div class="card-body d-grid gap-2">
+                        <a href="servicios-entrenador.html?action=create" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Crear Servicio
+                        </a>
+                        <button class="btn btn-outline-primary" id="btnVerDisponibilidad">
+                            <i class="bi bi-clock"></i> Gestionar Disponibilidad
+                        </button>
+                        <a href="perfil.html" class="btn btn-outline-secondary">
+                            <i class="bi bi-person"></i> Editar Perfil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-lg-start">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">SportLink Colombia</h5>
+                    <p>Conectando deportistas con los mejores entrenadores y escuelas deportivas de Bogotá.</p>
+                </div>
+                
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">Contacto</h5>
+                    <p><i class="bi bi-envelope me-2"></i> jmontesl1@ucentral.edu.co</p>
+                    <p><i class="bi bi-envelope me-2"></i> arodriguezr39@ucentral.edu.co</p>
+                    <p><i class="bi bi-envelope me-2"></i> jgrossob@ucentral.edu.co</p>
+                </div>
+                
+                <div class="col-lg-4">
+                    <h5 class="text-uppercase mb-4">Enlaces rápidos</h5>
+                    <div class="footer-links">
+                        <p><a href="dashboard-entrenador.html">Dashboard</a></p>
+                        <p><a href="servicios-entrenador.html">Mis Servicios</a></p>
+                        <p><a href="sesiones-entrenador.html">Mis Sesiones</a></p>
+                        <p><a href="perfil.html">Mi Perfil</a></p>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+            
+            <div class="text-center py-2">
+                <small>© 2025 SportLink Colombia. Todos los derechos reservados.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/dashboard-entrenador.js"></script>
+</body>
+</html>
