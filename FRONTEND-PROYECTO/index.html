@@ -57,125 +57,120 @@
     </section>
 
     <!-- Search Card -->
-    <div class="container search-container">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="search-card">
-                    <form id="searchForm">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-md-4">
-                                <label for="sport" class="form-label fw-bold">¿Qué deporte buscas?</label>
-                                <select class="form-select" id="sport" required>
-                                    <option value="" selected disabled>Seleccionar deporte</option>
-                                    <option>Fútbol</option>
-                                    <option>Tenis</option>
-                                    <option>Natación</option>
-                                    <option>Boxeo</option>
-                                    <option>Crossfit</option>
-                                    <option>Entrenamiento funcional</option>
-                                    <option>Baloncesto</option>
-                                    <option>Voleibol</option>
-                                    <option>Artes marciales</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="location" class="form-label fw-bold">Localidad</label>
-                                <select class="form-select" id="location" required>
-                                    <option value="" selected disabled>Seleccionar localidad</option>
-                                    <option>Usaquén</option>
-                                    <option>Chapinero</option>
-                                    <option>Santa Fe</option>
-                                    <option>San Cristóbal</option>
-                                    <option>Usme</option>
-                                    <option>Tunjuelito</option>
-                                    <option>Bosa</option>
-                                    <option>Kennedy</option>
-                                    <option>Fontibón</option>
-                                    <option>Engativá</option>
-                                    <option>Suba</option>
-                                    <option>Barrios Unidos</option>
-                                    <option>Teusaquillo</option>
-                                    <option>Los Mártires</option>
-                                    <option>Antonio Nariño</option>
-                                    <option>Puente Aranda</option>
-                                    <option>La Candelaria</option>
-                                    <option>Rafael Uribe Uribe</option>
-                                    <option>Ciudad Bolívar</option>
-                                    <option>Sumapaz</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="date" class="form-label fw-bold">Fecha disponible</label>
-                                <input type="date" class="form-control" id="date">
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-search"></i> Buscar
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Botón para filtros adicionales -->
-                        <div class="text-center mt-3">
-                            <button class="btn btn-link p-0 more-filters-btn" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters" aria-expanded="false" aria-controls="advancedFilters">
-                                <i class="bi bi-funnel"></i> <span class="filter-text">Más filtros</span> <i class="bi bi-chevron-down ms-1"></i>
-                            </button>
-                        </div>  
-                        
-                        <!-- Filtros avanzados (colapsados inicialmente) -->
-                        <div class="collapse mb-5" id="advancedFilters">
-                            <div class="row mt-3 g-3">
-                                <div class="col-md-3">
-                                    <label for="priceRange" class="form-label fw-bold">Precio máximo: <span id="priceValue">$150.000</span></label>
-                                    <input type="range" class="form-range" min="20000" max="300000" step="10000" value="150000" id="priceRange">
-                                    <div class="d-flex justify-content-between">
-                                        <small>$20.000</small>
-                                        <small>$300.000</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-bold">Tipo de servicio</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="centers" checked>
-                                        <label class="form-check-label" for="centers">Centros deportivos</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="trainers" checked>
-                                        <label class="form-check-label" for="trainers">Entrenadores</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="schedule" class="form-label fw-bold">Horario preferido</label>
-                                    <select class="form-select" id="schedule">
-                                        <option value="" selected>Todos los horarios</option>
-                                        <option>Mañana (6am-12pm)</option>
-                                        <option>Tarde (12pm-6pm)</option>
-                                        <option>Noche (6pm-10pm)</option>
-                                        <option>Fines de semana</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-bold">Experiencia</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="beginner">
-                                        <label class="form-check-label" for="beginner">Principiante</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="intermediate" checked>
-                                        <label class="form-check-label" for="intermediate">Intermedio</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="advanced">
-                                        <label class="form-check-label" for="advanced">Avanzado</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+<div class="container search-container">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-md-10">
+      <div class="search-card p-3">
+        <form id="searchForm">
+          <div class="row g-3 align-items-end justify-content-center">
+            <div class="col-lg-5 col-md-6">
+              <label for="sport" class="form-label fw-bold">¿Qué deporte buscas?</label>
+              <select class="form-select" id="sport" required>
+                <option value="" selected disabled>Seleccionar deporte</option>
+                <option>Fútbol</option>
+                <option>Tenis</option>
+                <option>Natación</option>
+                <option>Boxeo</option>
+                <option>Crossfit</option>
+                <option>Yoga</option>
+                <option>Entrenamiento funcional</option>
+                <option>Baloncesto</option>
+                <option>Voleibol</option>
+                <option>Artes marciales</option>
+              </select>
             </div>
-        </div>
+
+            <div class="col-lg-4 col-md-5">
+              <label for="location" class="form-label fw-bold">Localidad</label>
+              <select class="form-select" id="location" required>
+                <option value="" selected disabled>Seleccionar localidad</option>
+                <option>Usaquén</option>
+                <option>Chapinero</option>
+                <option>Santa Fe</option>
+                <option>San Cristóbal</option>
+                <option>Usme</option>
+                <option>Tunjuelito</option>
+                <option>Bosa</option>
+                <option>Kennedy</option>
+                <option>Fontibón</option>
+                <option>Engativá</option>
+                <option>Suba</option>
+                <option>Barrios Unidos</option>
+                <option>Teusaquillo</option>
+                <option>Los Mártires</option>
+                <option>Antonio Nariño</option>
+                <option>Puente Aranda</option>
+                <option>La Candelaria</option>
+                <option>Rafael Uribe Uribe</option>
+                <option>Ciudad Bolívar</option>
+                <option>Sumapaz</option>
+              </select>
+            </div>
+
+            <div class="col-lg-3 col-md-4 col-sm-6 text-center">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Buscar
+              </button>
+            </div>
+          </div>
+
+          <!-- Botón para filtros adicionales -->
+          <div class="text-center mt-3">
+            <button class="btn btn-link p-0 more-filters-btn" type="button"
+              data-bs-toggle="collapse" data-bs-target="#advancedFilters"
+              aria-expanded="false" aria-controls="advancedFilters">
+              <i class="bi bi-funnel"></i>
+              <span class="filter-text">Más filtros</span>
+              <i class="bi bi-chevron-down ms-1"></i>
+            </button>
+          </div>
+
+          <!-- Filtros avanzados -->
+          <div class="collapse mb-5" id="advancedFilters">
+            <div class="row mt-3 g-3">
+              <div class="col-md-6">
+                <label for="priceRange" class="form-label fw-bold">Precio máximo:
+                  <span id="priceValue">$150.000</span></label>
+                <input type="range" class="form-range" min="20000" max="300000"
+                  step="10000" value="150000" id="priceRange">
+                <div class="d-flex justify-content-between">
+                  <small>$20.000</small>
+                  <small>$300.000</small>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Nivel de experiencia</label>
+                <div class="form-check">
+                  <input class="form-check-input experience-radio" type="radio"
+                    name="experienceLevel" id="beginner" value="principiante">
+                  <label class="form-check-label" for="beginner">Principiante</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input experience-radio" type="radio"
+                    name="experienceLevel" id="intermediate" value="intermedio">
+                  <label class="form-check-label" for="intermediate">Intermedio</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input experience-radio" type="radio"
+                    name="experienceLevel" id="advanced" value="avanzado">
+                  <label class="form-check-label" for="advanced">Avanzado</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input experience-radio" type="radio"
+                    name="experienceLevel" id="allLevels" value="Todos los niveles"
+                    checked>
+                  <label class="form-check-label" for="allLevels">Todos los niveles</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
+</div>
+
 
     <!-- Resultados -->
     <section class="container mb-5 mt-5" id="resultsSection" style="display: none;">

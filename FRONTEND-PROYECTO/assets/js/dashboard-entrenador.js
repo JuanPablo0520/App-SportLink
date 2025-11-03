@@ -74,12 +74,33 @@ class DashboardEntrenadorManager {
 
     async loadEstadisticas() {
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const stats = await ApiClient.get(`/Entrenador/estadisticas/${this.currentTrainer.idEntrenador}`);
-            
-            // Simulación temporal
-            const stats = await this.simulateGetEstadisticas();
-            
+            const idEntrenador = this.currentTrainer?.idEntrenador;
+            if (!idEntrenador) {
+                console.error('Entrenador no definido');
+                return;
+            }
+
+            // Peticiones paralelas
+            const [
+                sesionesPendientes,
+                serviciosActivos,
+                clientesTotales,
+                calificacionPromedio
+            ] = await Promise.all([
+                ApiClient.get(`/Sesion/obtener/estado/Pendiente/idEntrenador/${idEntrenador}`),
+                ApiClient.get(`/Servicio/obtener/idEntrenador/${idEntrenador}/estado/Activo`),
+                ApiClient.get(`/Sesion/obtener/cantClientes/1`),
+                ApiClient.get(`/Resenia/obtener/calificacionEntrenador/${idEntrenador}`)
+            ]);
+
+            // Construir el objeto esperado por renderEstadisticas()
+            const stats = {
+                sesionesPendientes: sesionesPendientes?.length || 0,
+                serviciosActivos: serviciosActivos?.length || 0,
+                clientesTotales: clientesTotales || 0,
+                calificacionPromedio: calificacionPromedio || 0
+            };
+
             this.estadisticas = stats;
             this.renderEstadisticas(stats);
 
@@ -90,20 +111,76 @@ class DashboardEntrenadorManager {
 
     async loadProximasSesiones() {
         const container = document.getElementById('proximasSesionesContainer');
-        
+
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const sesiones = await ApiClient.get(`/Sesion/entrenador/${this.currentTrainer.idEntrenador}/proximas`);
-            
-            // Simulación temporal
-            const sesiones = await this.simulateGetProximasSesiones();
-            
-            this.proximasSesiones = sesiones;
-            this.renderProximasSesiones(sesiones);
+            const currentTrainer = this.currentTrainer;
+
+            if (!currentTrainer || !currentTrainer.idEntrenador) {
+                throw new Error('Entrenador no autenticado');
+            }
+
+            const idEntrenador = currentTrainer.idEntrenador;
+            const estados = ['Pendiente', 'Confirmada', 'activa']; // estados válidos como próximas
+
+            // Obtener todas las sesiones del entrenador por estado (en paralelo)
+            const peticiones = estados.map(estado =>
+                ApiClient.get(`/Sesion/obtener/estado/${estado}/idEntrenador/${idEntrenador}`)
+            );
+
+            const resultados = await Promise.all(peticiones);
+            const todasLasSesiones = resultados.flat();
+
+            if (!todasLasSesiones || todasLasSesiones.length === 0) {
+                this.proximasSesiones = [];
+                this.renderProximasSesiones([]);
+                return;
+            }
+
+            // Filtrar solo las futuras
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            const sesionesFuturas = todasLasSesiones.filter(sesion => {
+                const fechaSesion = new Date(sesion.fechaHora);
+                return fechaSesion >= hoy;
+            });
+
+            // Mapear datos según tu estructura de JSON real
+            this.proximasSesiones = sesionesFuturas.map(sesion => {
+                const fecha = new Date(sesion.fechaHora);
+
+                return {
+                    idSesion: sesion.idSesion,
+                    servicio: sesion.servicio?.nombre || 'Sesión de Entrenamiento',
+                    clienteNombre: sesion.cliente
+                        ? `${sesion.cliente.nombres} ${sesion.cliente.apellidos}`
+                        : 'Cliente no especificado',
+                    estado: sesion.estado,
+                    estadoTexto: sesion.estado.charAt(0).toUpperCase() + sesion.estado.slice(1).toLowerCase(),
+                    fecha: fecha.toLocaleDateString('es-CO', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short'
+                    }),
+                    hora: fecha.toLocaleTimeString('es-CO', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }),
+                    ubicacion: sesion.servicio?.ubicacion || sesion.cliente?.ubicacion || 'Sin ubicación',
+                    precio: sesion.servicio?.precio || 0
+                };
+            });
+
+            // Ordenar por fecha más próxima
+            this.proximasSesiones.sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora));
+
+            // Renderizar las sesiones
+            this.renderProximasSesiones(this.proximasSesiones);
 
         } catch (error) {
             console.error('Error loading próximas sesiones:', error);
-            container.innerHTML = this.getErrorState('Error al cargar las sesiones');
+            container.innerHTML = this.getErrorState('Error al cargar las próximas sesiones');
         }
     }
 
@@ -164,7 +241,7 @@ class DashboardEntrenadorManager {
 
     renderProximasSesiones(sesiones) {
         const container = document.getElementById('proximasSesionesContainer');
-        
+
         if (!sesiones || sesiones.length === 0) {
             container.innerHTML = this.getEmptyState(
                 'calendar-x',
@@ -175,7 +252,7 @@ class DashboardEntrenadorManager {
         }
 
         let html = '';
-        
+
         // Mostrar máximo 5 sesiones en el dashboard
         sesiones.slice(0, 5).forEach(sesion => {
             html += `
@@ -184,16 +261,18 @@ class DashboardEntrenadorManager {
                         <div class="flex-grow-1">
                             <div class="sesion-title">${sesion.servicio || 'Sesión de Entrenamiento'}</div>
                             <div class="sesion-cliente">
-                                <i class="bi bi-person"></i> ${sesion.clienteNombre}
+                                <i class="bi bi-person"></i> ${sesion.clienteNombre || 'Cliente no especificado'}
                             </div>
                         </div>
-                        <span class="badge-estado badge-${sesion.estado.toLowerCase()}">${sesion.estadoTexto}</span>
+                        <span class="badge-estado badge-${(sesion.estado || '').toLowerCase()}">
+                            ${sesion.estadoTexto || 'Pendiente'}
+                        </span>
                     </div>
                     <div class="sesion-info">
-                        <span><i class="bi bi-calendar-event"></i> ${UIHelpers.formatDate(sesion.fecha)}</span>
-                        <span><i class="bi bi-clock"></i> ${sesion.hora}</span>
-                        <span><i class="bi bi-geo-alt"></i> ${sesion.ubicacion}</span>
-                        <span><i class="bi bi-cash-coin"></i> ${UIHelpers.formatPrice(sesion.precio)}</span>
+                        <span><i class="bi bi-calendar-event"></i> ${sesion.fecha || 'Sin fecha'}</span>
+                        <span><i class="bi bi-clock"></i> ${sesion.hora || 'Hora no definida'}</span>
+                        <span><i class="bi bi-geo-alt"></i> ${sesion.ubicacion || 'Ubicación no disponible'}</span>
+                        <span><i class="bi bi-cash-coin"></i> ${UIHelpers.formatPrice(sesion.precio || 0)}</span>
                     </div>
                     <div class="mt-2">
                         <button class="btn btn-sm btn-primary me-2" onclick="dashboardEntrenadorManager.iniciarChat('${sesion.idSesion}')">
@@ -206,7 +285,7 @@ class DashboardEntrenadorManager {
                 </div>
             `;
         });
-        
+
         container.innerHTML = html;
     }
 

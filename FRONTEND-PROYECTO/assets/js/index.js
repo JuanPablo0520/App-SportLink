@@ -370,42 +370,43 @@ class IndexPageManager {
 
     async handleSearch(e) {
         e.preventDefault();
-        
+
         try {
-            // Recopilar datos de búsqueda
-            this.searchFilters = {
-                sport: document.getElementById('sport').value,
-                location: document.getElementById('location').value,
-                date: document.getElementById('date').value,
-                maxPrice: parseInt(document.getElementById('priceRange').value),
-                includeCenters: document.getElementById('centers').checked,
-                includeTrainers: document.getElementById('trainers').checked,
-                schedule: document.getElementById('schedule').value,
-                experienceLevels: this.getSelectedExperienceLevels()
-            };
+            const sport = document.getElementById('sport').value || '';
+            const location = document.getElementById('location').value || '';
+
+            // Verificar si filtros avanzados están colapsados
+            const advancedFiltersVisible = document.getElementById('advancedFilters').classList.contains('show');
+
+            const maxPrice = advancedFiltersVisible
+                ? parseInt(document.getElementById('priceRange').value)
+                : 0;
+
+            const experienceLevel = advancedFiltersVisible
+                ? document.querySelector('input[name="experienceLevel"]:checked')?.value || ''
+                : null;
 
             // Validar campos requeridos
-            if (!this.searchFilters.sport || !this.searchFilters.location) {
+            if (!sport || !location) {
                 UIHelpers.showToast('Por favor selecciona un deporte y una localidad', 'warning');
                 return;
             }
 
-            // Mostrar loading
             this.showSearchLoading(true);
 
-            // TODO: Reemplazar con llamada real al API
-            // const results = await ApiClient.post('/search', this.searchFilters);
-            
-            // Simulación temporal
-            const results = await this.simulateSearchAPI(this.searchFilters);
-            
-            this.currentResults = results;
+            // Construir endpoint
+            const endpoint = `/Servicio/filtros/${sport}/${location}/${maxPrice ?? '0'}/${experienceLevel ?? 'null'}`;
+            console.log("Endpoint generado:", endpoint);
+
+            const results = await ApiClient.get(endpoint);
+            console.log("Resultados recibidos:", results);
+
+            // Mapear resultados del API al formato esperado
+            this.currentResults = this.mapApiResultsToDisplayFormat(results);
             this.currentPage = 1;
-            
+
             this.displayResults();
             this.showResultsSection();
-            
-            // Scroll a resultados
             UIHelpers.scrollToElement('resultsSection', 100);
 
         } catch (error) {
@@ -414,6 +415,54 @@ class IndexPageManager {
         } finally {
             this.showSearchLoading(false);
         }
+    }
+
+    // NUEVA FUNCIÓN: Mapear resultados del API al formato de visualización
+    mapApiResultsToDisplayFormat(apiResults) {
+        if (!Array.isArray(apiResults)) {
+            console.error('Los resultados no son un array:', apiResults);
+            return [];
+        }
+
+        return apiResults.map(servicio => ({
+            id: servicio.idServicio,
+            title: servicio.nombre,
+            type: 'Entrenador', // Siempre es entrenador según tu estructura
+            name: servicio.entrenador ? `${servicio.entrenador.nombres} ${servicio.entrenador.apellidos}` : 'Entrenador',
+            location: servicio.ubicacion,
+            price: servicio.precio,
+            rating: 4.5, // Por defecto, puedes calcular esto si tienes reseñas
+            reviews: 0, // Por defecto, actualizar si tienes el dato
+            image: this.getDefaultImageByDeporte(servicio.deporte), // Imagen por deporte
+            available: servicio.estado === 'Activo',
+            sport: servicio.deporte,
+            experience: servicio.nivel,
+            description: servicio.descripcion,
+            duracion: servicio.duracion,
+            cuposDisponibles: servicio.cuposDisponibles,
+            entrenadorId: servicio.entrenador?.idEntrenador,
+            entrenadorEmail: servicio.entrenador?.correo
+        }));
+    }
+
+    // NUEVA FUNCIÓN: Obtener imagen por defecto según el deporte
+    getDefaultImageByDeporte(deporte) {
+        const imageMap = {
+            'Fútbol': 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Tenis': 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Natación': 'https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Boxeo': 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Crossfit': 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'CrossFit': 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Entrenamiento funcional': 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Baloncesto': 'https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Voleibol': 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Artes marciales': 'https://images.unsplash.com/photo-1555597673-b21d5c935865?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Yoga': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            'Pilates': 'https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+        };
+
+        return imageMap[deporte] || 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
     }
 
     getSelectedExperienceLevels() {
@@ -475,23 +524,37 @@ class IndexPageManager {
         card.innerHTML = `
             <div class="card h-100 result-card">
                 <div class="position-relative">
-                    <img src="${item.image}" class="card-img-top" alt="${item.title}" loading="lazy">
+                    <img src="${item.image}" class="card-img-top" alt="${item.title}" loading="lazy" 
+                        style="height: 200px; object-fit: cover;">
                     <span class="availability-badge ${item.available ? 'available' : 'unavailable'}">
                         ${item.available ? 'Disponible' : 'No disponible'}
                     </span>
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">${item.title}</h5>
-                    ${item.type === 'Entrenador' ? `<p class="text-muted mb-2"><i class="bi bi-person"></i> ${item.name}</p>` : ''}
-                    <p class="text-muted mb-2"><i class="bi bi-geo-alt"></i> ${item.location}</p>
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-person"></i> ${item.name}
+                    </p>
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-geo-alt"></i> ${item.location}
+                    </p>
                     <div class="mb-2">
                         <span class="fw-bold">${UIHelpers.formatPrice(item.price)}</span> / sesión
                     </div>
                     <div class="d-flex justify-content-between mb-3">
-                        <span><i class="bi bi-star-fill text-warning"></i> ${item.rating} (${item.reviews})</span>
+                        <span>
+                            <i class="bi bi-people-fill text-primary"></i> 
+                            ${item.cuposDisponibles} cupos
+                        </span>
                         <span class="localidad-badge">${item.sport}</span>
                     </div>
-                    <p class="text-muted small">${item.description}</p>
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> ${item.duracion} min | 
+                            <i class="bi bi-award"></i> ${item.experience}
+                        </small>
+                    </div>
+                    <p class="text-muted small">${this.truncateText(item.description, 100)}</p>
                     <button class="btn btn-outline-primary w-100 view-details" data-id="${item.id}">
                         <i class="bi bi-eye"></i> Ver detalles
                     </button>
@@ -506,10 +569,78 @@ class IndexPageManager {
         return card;
     }
 
+    // NUEVA FUNCIÓN: Truncar texto
+    truncateText(text, maxLength) {
+        if (!text) return 'Sin descripción disponible';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+
     showItemDetails(item) {
-        // TODO: Implementar modal de detalles o redirección a página de detalles
-        UIHelpers.showToast(`Mostrando detalles de: ${item.title}`, 'info');
-        console.log('Item details:', item);
+        const modalHTML = `
+            <div class="modal fade" id="servicioDetalleModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title"><i class="bi bi-info-circle"></i> ${item.title}</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-4 text-center mb-3">
+                                    <img src="${item.image}" class="img-fluid rounded" alt="${item.title}">
+                                    <div class="mt-3">
+                                        <span class="badge ${item.available ? 'bg-success' : 'bg-danger'} fs-6">
+                                            ${item.available ? 'Disponible' : 'No disponible'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <h6 class="text-primary mb-3">Información del Servicio</h6>
+                                    <p><strong>Entrenador:</strong> ${item.name}</p>
+                                    <p><strong>Deporte:</strong> ${item.sport}</p>
+                                    <p><strong>Nivel:</strong> ${item.experience}</p>
+                                    <p><strong>Ubicación:</strong> ${item.location}</p>
+                                    <p><strong>Duración:</strong> ${item.duracion} minutos</p>
+                                    <p><strong>Cupos disponibles:</strong> ${item.cuposDisponibles} personas</p>
+                                    <p><strong>Precio por sesión:</strong> <span class="text-success fw-bold">${UIHelpers.formatPrice(item.price)}</span></p>
+
+                                    <hr>
+
+                                    <h6 class="text-primary mb-2">Descripción</h6>
+                                    <p>${item.description}</p>
+
+                                    ${item.entrenadorEmail ? `
+                                        <hr>
+                                        <p class="mb-0"><i class="bi bi-envelope"></i> Contacto: ${item.entrenadorEmail}</p>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" onclick="indexPageManager.agendarServicio(${item.id})">
+                                <i class="bi bi-calendar-check"></i> Agendar Sesión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Eliminar modal existente si hay uno
+        const existingModal = document.getElementById('servicioDetalleModal');
+        if (existingModal) existingModal.remove();
+                                    
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+                                    
+        const modal = new bootstrap.Modal(document.getElementById('servicioDetalleModal'));
+        modal.show();
+
+        // Limpiar modal del DOM al cerrarse
+        document.getElementById('servicioDetalleModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
     }
 
     showResultsSection() {
@@ -517,6 +648,176 @@ class IndexPageManager {
         if (resultsSection) {
             resultsSection.style.display = 'block';
         }
+    }
+
+    async agendarServicio(servicioId) {
+        // Verificar si el usuario está autenticado
+        if (!AuthManager.isAuthenticated()) {
+            UIHelpers.showToast('Debes iniciar sesión para agendar una sesión', 'warning');
+
+            // Cerrar modal de detalles
+            const modal = bootstrap.Modal.getInstance(document.getElementById('servicioDetalleModal'));
+            if (modal) modal.hide();
+
+            // Abrir modal de login
+            setTimeout(() => {
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+            }, 500);
+
+            return;
+        }
+
+        const user = AuthManager.getUser();
+
+        // Verificar que sea cliente
+        if (user.tipoUsuario !== 'cliente') {
+            UIHelpers.showToast('Solo los clientes pueden agendar sesiones', 'warning');
+            return;
+        }
+
+        // Buscar el servicio en los resultados actuales
+        const servicio = this.currentResults.find(s => s.id === servicioId);
+
+        if (!servicio) {
+            UIHelpers.showToast('Servicio no encontrado', 'danger');
+            return;
+        }
+
+        // Verificar cupos disponibles
+        if (servicio.cuposDisponibles <= 0) {
+            UIHelpers.showToast('No hay cupos disponibles para este servicio', 'warning');
+            return;
+        }
+
+        // Confirmar agendamiento
+        UIHelpers.showConfirmModal(
+            'Confirmar Agendamiento',
+            `¿Deseas agendar una sesión de <strong>${servicio.title}</strong> con ${servicio.name}?<br><br>
+            <strong>Precio:</strong> ${UIHelpers.formatPrice(servicio.price)}<br>
+            <strong>Duración:</strong> ${servicio.duracion} minutos<br>
+            <strong>Ubicación:</strong> ${servicio.location}`,
+            async () => {
+                await this.procesarAgendamiento(servicioId, servicio, user);
+            }
+        );
+    }
+
+    async procesarAgendamiento(servicioId, servicio, user) {
+        try {
+            // Mostrar loading en el botón
+            const agendarBtn = document.querySelector(`button[onclick="indexPageManager.agendarServicio(${servicioId})"]`);
+            if (agendarBtn) {
+                agendarBtn.disabled = true;
+                agendarBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Agendando...';
+            }
+
+            // Preparar datos de la sesión
+            const sesionData = {
+                idSesion: null,
+                fechaHora: this.obtenerProximaFechaDisponible(), // Fecha/hora actual o próxima disponible
+                estado: "Pendiente", // O "Confirmada" según tu lógica
+                cliente: {
+                    idCliente: user.idCliente//,
+                    //nombres: user.nombres,
+                    //apellidos: user.apellidos,
+                    //correo: user.correo,
+                    //contrasenia: user.contrasenia,
+                    //fotoPerfil: user.fotoPerfil || null,
+                    //fechaNacimiento: user.fechaNacimiento || null,
+                    //estatura: user.estatura || null,
+                    //peso: user.peso || null,
+                    //telefono: user.telefono || null,
+                    //ubicacion: user.ubicacion || null,
+                    //fechaRegistro: user.fechaRegistro || null
+                },
+                entrenador: {
+                    idEntrenador: servicio.entrenadorId//,
+                    //nombres: servicio.name.split(' ')[0],
+                    //apellidos: servicio.name.split(' ').slice(1).join(' '),
+                    //correo: servicio.entrenadorEmail || '',
+                    //contrasenia: '', // No es necesario enviarlo
+                    //especialidad: [servicio.sport],
+                    //certificaciones: [],
+                    //fotoPerfil: null,
+                    //fechaRegistro: null
+                },
+                servicio: {
+                    idServicio: servicioId,
+                    //nombre: servicio.title,
+                    //descripcion: servicio.description,
+                    //precio: servicio.price,
+                    //deporte: servicio.sport,
+                    //nivel: servicio.experience,
+                    //duracion: servicio.duracion,
+                    cuposDisponibles: servicio.cuposDisponibles - 1, // Reducir cupo
+                    //estado: servicio.available ? "Activo" : "Inactivo",
+                    //ubicacion: servicio.location
+                }
+            };
+
+            console.log('Datos de sesión a enviar:', sesionData);
+
+            // Crear la sesión
+            const response = await ApiClient.post('/Sesion/crear', sesionData);
+
+            if (response) {
+                // Cerrar modal de detalles
+                const modal = bootstrap.Modal.getInstance(document.getElementById('servicioDetalleModal'));
+                if (modal) modal.hide();
+
+                // Mostrar mensaje de éxito
+                UIHelpers.showToast('¡Sesión agendada exitosamente!', 'success');
+
+                // Actualizar cupos en el resultado local
+                servicio.cuposDisponibles -= 1;
+
+                // Recargar los resultados para mostrar cupos actualizados
+                this.displayResults();
+
+                // Opcional: Redirigir a la página de sesiones
+                setTimeout(() => {
+                    const irASesiones = confirm('¿Deseas ver tus sesiones agendadas?');
+                    if (irASesiones) {
+                        window.location.href = 'perfil.html?tab=agendadas';
+                    }
+                }, 1500);
+
+            } else {
+                throw new Error('No se pudo crear la sesión');
+            }
+
+        } catch (error) {
+            console.error('Error al agendar sesión:', error);
+            UIHelpers.showToast(error.message || 'Error al agendar la sesión', 'danger');
+        } finally {
+            // Restaurar botón
+            const agendarBtn = document.querySelector(`button[onclick="indexPageManager.agendarServicio(${servicioId})"]`);
+            if (agendarBtn) {
+                agendarBtn.disabled = false;
+                agendarBtn.innerHTML = '<i class="bi bi-calendar-check"></i> Agendar Sesión';
+            }
+        }
+    }
+
+// NUEVA FUNCIÓN: Obtener próxima fecha disponible (formato LocalDateTime para Java)
+    obtenerProximaFechaDisponible() {
+        // Obtener fecha/hora actual
+        const ahora = new Date();
+
+        // Sumar 1 día para la sesión (puedes ajustar esto según tu lógica)
+        const proximaFecha = new Date(ahora.getTime() + (24 * 60 * 60 * 1000));
+
+        // Formatear a ISO 8601 compatible con LocalDateTime de Java
+        // Formato: "2025-11-03T10:00:00"
+        const year = proximaFecha.getFullYear();
+        const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
+        const day = String(proximaFecha.getDate()).padStart(2, '0');
+        const hours = String(proximaFecha.getHours()).padStart(2, '0');
+        const minutes = String(proximaFecha.getMinutes()).padStart(2, '0');
+        const seconds = String(proximaFecha.getSeconds()).padStart(2, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
     }
 
     updateLoadMoreButton() {

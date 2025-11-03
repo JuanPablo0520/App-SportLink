@@ -234,16 +234,49 @@ class PerfilPageManager {
 
     async loadScheduledSessions() {
         const container = document.getElementById('agendadasContainer');
-        
+
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const sessions = await ApiClient.get('/user/sessions/scheduled', true);
-            
-            // Simulación temporal
-            const sessions = await this.simulateGetScheduledSessions();
-            
-            this.scheduledSessions = sessions;
-            this.renderScheduledSessions(sessions);
+            const currentUser = AuthManager.getUser();
+            if (!currentUser || !currentUser.idCliente) {
+                throw new Error('Usuario no autenticado');
+            }
+
+            const idCliente = currentUser.idCliente;
+            const estados = ['Pendiente', 'Confirmada', 'Activa'];
+
+            // Llamadas en paralelo a tu nuevo endpoint
+            const peticiones = estados.map(estado => 
+                ApiClient.get(`/Sesion/obtener/idCliente/${idCliente}/estado/${estado}`)
+            );
+
+            const resultados = await Promise.all(peticiones);
+
+            // Combinar todas las sesiones de los distintos estados
+            const todasLasSesiones = resultados.flat();
+
+            if (!todasLasSesiones || todasLasSesiones.length === 0) {
+                this.scheduledSessions = [];
+                this.renderScheduledSessions([]);
+                return;
+            }
+
+            // Filtrar solo sesiones futuras
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            const sesionesFuturas = todasLasSesiones.filter(sesion => {
+                const fechaSesion = new Date(sesion.fechaHora);
+                return fechaSesion >= hoy;
+            });
+
+            // Mapear al formato esperado por la vista
+            this.scheduledSessions = sesionesFuturas.map(sesion => this.mapSesionToView(sesion));
+
+            // Ordenar por fecha (más próximas primero)
+            this.scheduledSessions.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+            // Renderizar en pantalla
+            this.renderScheduledSessions(this.scheduledSessions);
 
         } catch (error) {
             console.error('Error loading scheduled sessions:', error);
@@ -251,23 +284,113 @@ class PerfilPageManager {
         }
     }
 
+
     async loadCompletedSessions() {
         const container = document.getElementById('completadasContainer');
-        
+    
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const sessions = await ApiClient.get('/user/sessions/completed', true);
+            const currentUser = AuthManager.getUser();
+            if (!currentUser || !currentUser.idCliente) {
+                throw new Error('Usuario no autenticado');
+            }
+        
+            const idCliente = currentUser.idCliente;
+            const estados = ['completada', 'finalizada'];
+        
+            // Obtener sesiones completadas y finalizadas en paralelo
+            const peticiones = estados.map(estado =>
+                ApiClient.get(`/Sesion/obtener/idCliente/${idCliente}/estado/${estado}`)
+            );
+        
+            const resultados = await Promise.all(peticiones);
+            const todasLasSesiones = resultados.flat();
+        
+            if (!todasLasSesiones || todasLasSesiones.length === 0) {
+                this.completedSessions = [];
+                this.renderCompletedSessions([]);
+                return;
+            }
+        
+            // Filtrar sesiones que ya ocurrieron (por fecha)
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+        
+            const sesionesCompletadas = todasLasSesiones.filter(sesion => {
+                const fechaSesion = new Date(sesion.fechaHora);
+                return fechaSesion < hoy;
+            });
+        
+            // Mapear al formato esperado por la vista
+            this.completedSessions = sesionesCompletadas.map(sesion => {
+                const mapped = this.mapSesionToView(sesion);
             
-            // Simulación temporal
-            const sessions = await this.simulateGetCompletedSessions();
-            
-            this.completedSessions = sessions;
-            this.renderCompletedSessions(sessions);
-
+                // Si en tu backend no envías reseñas dentro de las sesiones,
+                // puedes hacer otra llamada luego para obtenerlas si lo deseas.
+                return {
+                    ...mapped,
+                    hasReview: sesion.resenia ? true : false,
+                    rating: sesion.resenia ? sesion.resenia.calificacion : 0,
+                    review: sesion.resenia ? sesion.resenia.comentario : null,
+                    idResenia: sesion.resenia ? sesion.resenia.idResenia : null
+                };
+            });
+        
+            // Ordenar por fecha (más recientes primero)
+            this.completedSessions.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+        
+            // Renderizar en pantalla
+            this.renderCompletedSessions(this.completedSessions);
+        
         } catch (error) {
             console.error('Error loading completed sessions:', error);
             container.innerHTML = this.getErrorState('Error al cargar las sesiones completadas');
         }
+    }
+
+
+    // NUEVA FUNCIÓN: Mapear sesión del API al formato de vista
+    mapSesionToView(sesion) {
+        const fechaHora = new Date(sesion.fechaHora);
+
+        // Extraer fecha y hora
+        const fecha = fechaHora.toISOString().split('T')[0];
+        const hora = fechaHora.toLocaleTimeString('es-CO', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        });
+
+        // Obtener información del servicio
+        const servicioNombre = sesion.servicio?.nombre || 'Sesión de Entrenamiento';
+        const deporte = sesion.servicio?.deporte || '';
+        const ubicacion = sesion.servicio?.ubicacion || 'Ubicación no especificada';
+        const precio = sesion.servicio?.precio || 0;
+        const duracion = sesion.servicio?.duracion || 60;
+
+        // Obtener información del entrenador
+        const entrenadorNombre = sesion.entrenador 
+            ? `${sesion.entrenador.nombres} ${sesion.entrenador.apellidos}`
+            : 'Entrenador';
+
+        const entrenadorEmail = sesion.entrenador?.correo || '';
+
+        return {
+            id: sesion.idSesion,
+            idSesion: sesion.idSesion,
+            title: servicioNombre,
+            trainerName: entrenadorNombre,
+            location: ubicacion,
+            date: fecha,
+            dateTime: sesion.fechaHora,
+            time: hora,
+            price: precio,
+            sport: deporte,
+            duration: duracion,
+            status: sesion.estado || 'Pendiente',
+            entrenadorEmail: entrenadorEmail,
+            entrenadorId: sesion.entrenador?.idEntrenador,
+            servicioId: sesion.servicio?.idServicio
+        };
     }
 
     // ==================== MANEJO DE FORMULARIOS ====================
@@ -778,7 +901,6 @@ class PerfilPageManager {
         
         const form = e.target;
         const submitBtn = form.querySelector('button[type="submit"]');
-        const spinner = submitBtn.querySelector('.spinner-border');
         
         try {
             const rating = parseInt(form.querySelector('.rating-value').value);
@@ -793,22 +915,61 @@ class PerfilPageManager {
                 UIHelpers.showToast('Por favor escribe un comentario', 'warning');
                 return;
             }
-
+        
             UIHelpers.showButtonSpinner(submitBtn, true);
-
-            const evaluationData = {
-                sessionId,
-                rating,
-                comment
+        
+            // Buscar la sesión
+            const sesion = this.completedSessions.find(s => s.id === sessionId);
+            if (!sesion) {
+                throw new Error('Sesión no encontrada');
+            }
+        
+            const currentUser = AuthManager.getUser();
+            
+            // Crear reseña
+            const reseniaData = {
+                idResenia: null,
+                calificacion: rating,
+                comentario: comment,
+                fecha: new Date().toISOString().split('T')[0],
+                cliente: {
+                    idCliente: currentUser.idCliente,
+                    nombres: currentUser.nombres,
+                    apellidos: currentUser.apellidos,
+                    correo: currentUser.correo,
+                    contrasenia: currentUser.contrasenia,
+                    fotoPerfil: currentUser.fotoPerfil || null,
+                    fechaNacimiento: currentUser.fechaNacimiento || null,
+                    estatura: currentUser.estatura || null,
+                    peso: currentUser.peso || null,
+                    telefono: currentUser.telefono || null,
+                    ubicacion: currentUser.ubicacion || null,
+                    fechaRegistro: currentUser.fechaRegistro || null
+                },
+                entrenador: {
+                    idEntrenador: sesion.entrenadorId,
+                    nombres: sesion.trainerName.split(' ')[0],
+                    apellidos: sesion.trainerName.split(' ').slice(1).join(' '),
+                    correo: sesion.entrenadorEmail || '',
+                    contrasenia: '',
+                    especialidad: [sesion.sport],
+                    certificaciones: [],
+                    fotoPerfil: null,
+                    fechaRegistro: null
+                },
+                sesion: {
+                    idSesion: sesion.idSesion,
+                    fechaHora: sesion.dateTime,
+                    estado: sesion.status
+                }
             };
-
-            // TODO: Reemplazar con llamada real al API
-            // const response = await ApiClient.post('/user/sessions/evaluate', evaluationData, true);
+        
+            console.log('Enviando reseña:', reseniaData);
+        
+            // Crear reseña en el API
+            const response = await ApiClient.post('/Resenia/crear', reseniaData);
             
-            // Simulación temporal
-            const response = await this.simulateSubmitEvaluation(evaluationData);
-            
-            if (response.success) {
+            if (response) {
                 UIHelpers.showToast('Evaluación enviada exitosamente', 'success');
                 
                 // Actualizar sesión en los datos locales
@@ -817,14 +978,15 @@ class PerfilPageManager {
                     this.completedSessions[sessionIndex].hasReview = true;
                     this.completedSessions[sessionIndex].rating = rating;
                     this.completedSessions[sessionIndex].review = comment;
+                    this.completedSessions[sessionIndex].idResenia = response.idResenia;
                 }
                 
                 // Re-renderizar
                 this.renderCompletedSessions(this.completedSessions);
             } else {
-                throw new Error(response.message || 'Error al enviar evaluación');
+                throw new Error('No se pudo crear la reseña');
             }
-
+        
         } catch (error) {
             console.error('Evaluation submission error:', error);
             UIHelpers.showToast(error.message || 'Error al enviar la evaluación', 'danger');
