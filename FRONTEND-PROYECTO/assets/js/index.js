@@ -7,7 +7,9 @@ class IndexPageManager {
         this.resultsPerPage = 6;
         this.mapInstance = null;
         this.searchFilters = {};
-        
+        this.emailCheckTimeout = null; // NUEVO: Para debounce
+        this.emailAvailable = { client: false, trainer: false }; // NUEVO: Estado de emails
+
         this.init();
     }
 
@@ -15,6 +17,7 @@ class IndexPageManager {
         this.initializeEventListeners();
         this.initializePriceRange();
         this.initializeAdvancedFilters();
+        this.initializeEmailValidation();
     }
 
     // ==================== EVENT LISTENERS ====================
@@ -60,6 +63,224 @@ class IndexPageManager {
         if (registerTrainerForm) {
             registerTrainerForm.addEventListener('submit', (e) => this.handleTrainerRegister(e));
         }
+    }
+
+    initializeEmailValidation() {
+        // Validación para email de cliente
+        const clientEmail = document.getElementById('clientEmail');
+        if (clientEmail) {
+            clientEmail.addEventListener('input', UIHelpers.debounce((e) => {
+                this.verificarCorreoCliente(e.target.value);
+            }, 500));
+
+            // Limpiar al enfocar
+            clientEmail.addEventListener('focus', () => {
+                this.limpiarEstadoEmail('client');
+            });
+        }
+
+        // Validación para email de entrenador
+        const trainerEmail = document.getElementById('trainerEmail');
+        if (trainerEmail) {
+            trainerEmail.addEventListener('input', UIHelpers.debounce((e) => {
+                this.verificarCorreoEntrenador(e.target.value);
+            }, 500));
+
+            // Limpiar al enfocar
+            trainerEmail.addEventListener('focus', () => {
+                this.limpiarEstadoEmail('trainer');
+            });
+        }
+    }
+
+    async verificarCorreoCliente(correo) {
+        const emailInput = document.getElementById('clientEmail');
+        const feedbackDiv = emailInput.parentNode.querySelector('.invalid-feedback');
+
+        // Validar formato básico primero
+        if (!correo || !Validator.isValidEmail(correo)) {
+            if (correo) {
+                emailInput.classList.remove('is-valid');
+                emailInput.classList.add('is-invalid');
+                feedbackDiv.textContent = 'Por favor ingresa un email válido.';
+            }
+            this.emailAvailable.client = false;
+            return;
+        }
+
+        try {
+            // Mostrar indicador de carga
+            this.mostrarCargandoEmail(emailInput, true);
+
+            // Verificar en cliente
+            const existeCliente = await ApiClient.get(`/Cliente/verificarCorreo/${correo}`);
+
+            // Verificar en entrenador también
+            const existeEntrenador = await ApiClient.get(`/Entrenador/verificarCorreo/${correo}`);
+
+            const existe = existeCliente || existeEntrenador;
+
+            if (existe) {
+                // Email ya existe
+                emailInput.classList.remove('is-valid');
+                emailInput.classList.add('is-invalid');
+                feedbackDiv.textContent = '❌ No es posible registrar un cliente con este correo.';
+                this.emailAvailable.client = false;
+
+                // Opcionalmente, ofrecer ir al login
+                const loginLink = feedbackDiv.parentNode.querySelector('.email-login-link');
+                if (!loginLink) {
+                    const link = document.createElement('small');
+                    link.className = 'email-login-link d-block mt-1';
+                    link.innerHTML = '<a href="#" onclick="indexPageManager.abrirLogin(); return false;">¿Ya tienes cuenta? Inicia sesión aquí</a>';
+                    feedbackDiv.parentNode.appendChild(link);
+                }
+            } else {
+                // Email disponible
+                emailInput.classList.remove('is-invalid');
+                emailInput.classList.add('is-valid');
+                feedbackDiv.textContent = '';
+                this.emailAvailable.client = true;
+
+                // Mostrar mensaje de éxito
+                const successMsg = emailInput.parentNode.querySelector('.email-success-msg');
+                if (!successMsg) {
+                    const msg = document.createElement('small');
+                    msg.className = 'email-success-msg text-success d-block mt-1';
+                    msg.innerHTML = '✓ Correo disponible';
+                    emailInput.parentNode.appendChild(msg);
+                }
+            }
+
+        } catch (error) {
+            console.error('Error verificando correo cliente:', error);
+            emailInput.classList.remove('is-valid', 'is-invalid');
+            this.emailAvailable.client = false;
+        } finally {
+            this.mostrarCargandoEmail(emailInput, false);
+        }
+    }
+
+    async verificarCorreoEntrenador(correo) {
+        const emailInput = document.getElementById('trainerEmail');
+        const feedbackDiv = emailInput.parentNode.querySelector('.invalid-feedback');
+
+        // Validar formato básico primero
+        if (!correo || !Validator.isValidEmail(correo)) {
+            if (correo) {
+                emailInput.classList.remove('is-valid');
+                emailInput.classList.add('is-invalid');
+                feedbackDiv.textContent = 'Por favor ingresa un email válido.';
+            }
+            this.emailAvailable.trainer = false;
+            return;
+        }
+
+        try {
+            // Mostrar indicador de carga
+            this.mostrarCargandoEmail(emailInput, true);
+
+            // Verificar en entrenador
+            const existeEntrenador = await ApiClient.get(`/Entrenador/verificarCorreo/${correo}`);
+
+            // Verificar en cliente también
+            const existeCliente = await ApiClient.get(`/Cliente/verificarCorreo/${correo}`);
+
+            const existe = existeEntrenador || existeCliente;
+
+            if (existe) {
+                // Email ya existe
+                emailInput.classList.remove('is-valid');
+                emailInput.classList.add('is-invalid');
+                feedbackDiv.textContent = '❌ No es posible registrar un entrenador con este correo.';
+                this.emailAvailable.trainer = false;
+
+                // Opcionalmente, ofrecer ir al login
+                const loginLink = feedbackDiv.parentNode.querySelector('.email-login-link');
+                if (!loginLink) {
+                    const link = document.createElement('small');
+                    link.className = 'email-login-link d-block mt-1';
+                    link.innerHTML = '<a href="#" onclick="indexPageManager.abrirLogin(); return false;">¿Ya tienes cuenta? Inicia sesión aquí</a>';
+                    feedbackDiv.parentNode.appendChild(link);
+                }
+            } else {
+                // Email disponible
+                emailInput.classList.remove('is-invalid');
+                emailInput.classList.add('is-valid');
+                feedbackDiv.textContent = '';
+                this.emailAvailable.trainer = true;
+
+                // Mostrar mensaje de éxito
+                const successMsg = emailInput.parentNode.querySelector('.email-success-msg');
+                if (!successMsg) {
+                    const msg = document.createElement('small');
+                    msg.className = 'email-success-msg text-success d-block mt-1';
+                    msg.innerHTML = '✓ Correo disponible';
+                    emailInput.parentNode.appendChild(msg);
+                }
+            }
+
+        } catch (error) {
+            console.error('Error verificando correo entrenador:', error);
+            emailInput.classList.remove('is-valid', 'is-invalid');
+            this.emailAvailable.trainer = false;
+        } finally {
+            this.mostrarCargandoEmail(emailInput, false);
+        }
+    }
+
+    // NUEVA FUNCIÓN: Mostrar/ocultar indicador de carga en email
+    mostrarCargandoEmail(inputElement, mostrar) {
+        let spinner = inputElement.parentNode.querySelector('.email-spinner');
+
+        if (mostrar) {
+            if (!spinner) {
+                spinner = document.createElement('span');
+                spinner.className = 'email-spinner position-absolute';
+                spinner.style.right = '10px';
+                spinner.style.top = '38px';
+                spinner.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Verificando...</span></div>';
+                inputElement.parentNode.style.position = 'relative';
+                inputElement.parentNode.appendChild(spinner);
+            }
+        } else {
+            if (spinner) {
+                spinner.remove();
+            }
+        }
+    }
+
+    // NUEVA FUNCIÓN: Limpiar estado de validación de email
+    limpiarEstadoEmail(tipo) {
+        const inputId = tipo === 'client' ? 'clientEmail' : 'trainerEmail';
+        const emailInput = document.getElementById(inputId);
+
+        if (emailInput) {
+            emailInput.classList.remove('is-valid', 'is-invalid');
+
+            // Limpiar mensajes adicionales
+            const successMsg = emailInput.parentNode.querySelector('.email-success-msg');
+            const loginLink = emailInput.parentNode.querySelector('.email-login-link');
+
+            if (successMsg) successMsg.remove();
+            if (loginLink) loginLink.remove();
+        }
+    }
+
+    // NUEVA FUNCIÓN: Abrir modal de login
+    abrirLogin() {
+        // Cerrar modales de registro
+        const registerClientModal = bootstrap.Modal.getInstance(document.getElementById('registerClientModal'));
+        const registerTrainerModal = bootstrap.Modal.getInstance(document.getElementById('registerTrainerModal'));
+
+        if (registerClientModal) registerClientModal.hide();
+        if (registerTrainerModal) registerTrainerModal.hide();
+
+        // Abrir modal de login
+        setTimeout(() => {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        }, 300);
     }
 
     async handleLogin(e) {
@@ -147,11 +368,22 @@ class IndexPageManager {
 
     async handleClientRegister(e) {
         e.preventDefault();
-        
+
         const registerBtn = e.target.querySelector('button[type="submit"]');
-        
+
         try {
             UIHelpers.showButtonSpinner(registerBtn, true);
+
+            // Validar formulario
+            if (!Validator.validateForm(e.target)) {
+                return;
+            }
+
+            // NUEVA VALIDACIÓN: Verificar que el email esté disponible
+            if (!this.emailAvailable.client) {
+                UIHelpers.showToast('Por favor usa un correo electrónico diferente', 'warning');
+                return;
+            }
 
             const formData = {
                 idCliente: null,
@@ -168,31 +400,27 @@ class IndexPageManager {
                 fechaRegistro: null,
                 sesiones: [],
                 resenias: []
-                
-                
             };
-            
-            //console.log("formData que se envía: ", formData)
+
             const contrasenia = document.getElementById('clientPassword').value;
             const confirmPassword = document.getElementById('clientConfirmPassword').value;
-            
-            // Validar formulario
-            if (!Validator.validateForm(e.target)) {
-                return;
-            }
-            
+
             // Validación adicional de contraseñas
             if (!Validator.passwordsMatch(contrasenia, confirmPassword)) {
                 UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
                 return;
             }
-            
+
             const response = await ApiClient.post('/Cliente/crear', formData);
-            
+
             if (response) {
                 // Cerrar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('registerClientModal'));
                 modal.hide();
+
+                // Limpiar formulario
+                document.getElementById('registerClientForm').reset();
+                this.limpiarEstadoEmail('client');
 
                 // Mostrar mensaje de éxito
                 UIHelpers.showToast('¡Registro exitoso! Por favor inicia sesión.', 'success');
@@ -214,100 +442,49 @@ class IndexPageManager {
         }
     }
 
-    //async handleTrainerRegister(e) {
-    //    e.preventDefault();
-    //    
-    //    const registerBtn = e.target.querySelector('button[type="submit"]');
-    //    
-    //    try {
-    //        UIHelpers.showButtonSpinner(registerBtn, true);
-//
-    //        const formData = new FormData();
-    //        formData.append('firstName', document.getElementById('trainerFirstName').value.trim());
-    //        formData.append('lastName', document.getElementById('trainerLastName').value.trim());
-    //        formData.append('email', document.getElementById('trainerEmail').value.trim());
-    //        formData.append('phone', document.getElementById('trainerPhone').value.trim());
-    //        formData.append('password', document.getElementById('trainerPassword').value);
-    //        formData.append('confirmPassword', document.getElementById('trainerConfirmPassword').value);
-    //        formData.append('specialty', document.getElementById('trainerSpecialty').value.trim());
-    //        formData.append('location', document.getElementById('trainerLocation').value.trim());
-    //        formData.append('userType', 'trainer');
-//
-    //        // Archivos
-    //        const certifications = document.getElementById('trainerCertifications').files[0];
-    //        const background = document.getElementById('trainerBackground').files[0];
-    //        
-    //        if (certifications) formData.append('certifications', certifications);
-    //        if (background) formData.append('background', background);
-//
-    //        // Validar formulario
-    //        if (!Validator.validateForm(e.target)) {
-    //            return;
-    //        }
-//
-    //        // TODO: Reemplazar con llamada real al API
-    //        // const response = await ApiClient.post('/auth/register-trainer', formData);
-    //        
-    //        // Simulación temporal
-    //        const mockResponse = await this.simulateTrainerRegisterAPI(formData);
-    //        
-    //        if (mockResponse.success) {
-    //            // Cerrar modal
-    //            const modal = bootstrap.Modal.getInstance(document.getElementById('registerTrainerModal'));
-    //            modal.hide();
-    //            
-    //            // Mostrar mensaje de éxito
-    //            UIHelpers.showToast('¡Registro exitoso! Tu cuenta será revisada en 24-48 horas.', 'success');
-    //            
-    //        } else {
-    //            throw new Error(mockResponse.message || 'Error en el registro');
-    //        }
-//
-    //    } catch (error) {
-    //        console.error('Trainer register error:', error);
-    //        UIHelpers.showToast(error.message || 'Error al registrarse como entrenador', 'danger');
-    //    } finally {
-    //        UIHelpers.showButtonSpinner(registerBtn, false);
-    //    }
-    //}
-
-
-//------------------------------------------------------------------------------------------------------------------------------------------
+    // ACTUALIZAR handleTrainerRegister - Agregar validación de email
     async handleTrainerRegister(e) {
         e.preventDefault();
-        
+
         const registerBtn = e.target.querySelector('button[type="submit"]');
-        
+
         try {
             UIHelpers.showButtonSpinner(registerBtn, true);
+
+            // Validar formulario
+            if (!Validator.validateForm(e.target)) {
+                return;
+            }
+
+            // NUEVA VALIDACIÓN: Verificar que el email esté disponible
+            if (!this.emailAvailable.trainer) {
+                UIHelpers.showToast('Por favor usa un correo electrónico diferente', 'warning');
+                return;
+            }
+
+            // Validación adicional de contraseñas
+            const confirmPassword = document.getElementById('trainerConfirmPassword').value;
+            const password = document.getElementById('trainerPassword').value;
+
+            if (password !== confirmPassword) {
+                UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
+                return;
+            }
 
             const formData = {
                 idEntrenador: null,
                 nombres: document.getElementById('trainerFirstName').value.trim(),
                 apellidos: document.getElementById('trainerLastName').value.trim(),
                 correo: document.getElementById('trainerEmail').value.trim(),
-                contrasenia: document.getElementById('trainerPassword').value,
+                contrasenia: password,
                 especialidad: [document.getElementById('trainerSpecialty').value.trim()],
-                certificaciones: [], // Se manejarían por separado los archivos
+                certificaciones: [],
                 fotoPerfil: null,
                 fechaRegistro: null,
                 resenias: [],
                 sesiones: [],
                 servicios: []
             };
-            
-            console.log("formData que se envía:", formData);
-            // Validar formulario
-            if (!Validator.validateForm(e.target)) {
-                return;
-            }
-
-            // Validación adicional de contraseñas
-            const confirmPassword = document.getElementById('trainerConfirmPassword').value;
-            if (formData.contrasenia !== confirmPassword) {
-                UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
-                return;
-            }
 
             const response = await ApiClient.post('/Entrenador/crear', formData);
 
@@ -315,6 +492,10 @@ class IndexPageManager {
                 // Cerrar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('registerTrainerModal'));
                 modal.hide();
+
+                // Limpiar formulario
+                document.getElementById('registerTrainerForm').reset();
+                this.limpiarEstadoEmail('trainer');
 
                 // Mostrar mensaje de éxito
                 UIHelpers.showToast('¡Registro exitoso! Tu cuenta será revisada en 24-48 horas.', 'success');
@@ -329,8 +510,7 @@ class IndexPageManager {
         } finally {
             UIHelpers.showButtonSpinner(registerBtn, false);
         }
-    }   
-
+    }
 
     // ==================== BÚSQUEDA ====================
     initializePriceRange() {
