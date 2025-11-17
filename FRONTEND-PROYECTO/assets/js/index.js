@@ -7,8 +7,12 @@ class IndexPageManager {
         this.resultsPerPage = 6;
         this.mapInstance = null;
         this.searchFilters = {};
-        this.emailCheckTimeout = null; // NUEVO: Para debounce
-        this.emailAvailable = { client: false, trainer: false }; // NUEVO: Estado de emails
+        this.emailCheckTimeout = null;
+        this.emailAvailable = { client: false, trainer: false };
+        
+        // Variables para el modal de verificación
+        this.resendTimeout = null;
+        this.resendCountdownInterval = null;
 
         this.init();
     }
@@ -18,6 +22,7 @@ class IndexPageManager {
         this.initializePriceRange();
         this.initializeAdvancedFilters();
         this.initializeEmailValidation();
+        this.initializeVerificationModal(); // NUEVO
     }
 
     // ==================== EVENT LISTENERS ====================
@@ -42,6 +47,141 @@ class IndexPageManager {
 
         // Formularios de autenticación
         this.initializeAuthForms();
+    }
+
+    // ==================== INICIALIZAR MODAL DE VERIFICACIÓN ====================
+    initializeVerificationModal() {
+        // Botón de cerrar (X)
+        const closeBtn = document.getElementById("closeVerifyModal");
+        if (closeBtn) {
+            closeBtn.addEventListener("click", () => this.cerrarModalVerificacion());
+        }
+        
+        // Botón de reenviar código
+        const resendBtn = document.getElementById("resendCodeBtn");
+        if (resendBtn) {
+            resendBtn.addEventListener("click", async () => {
+                const correo = document.getElementById("verifyEmailDisplay").textContent;
+                
+                if (correo && correo !== "correo@ejemplo.com") {
+                    resendBtn.disabled = true;
+                    
+                    try {
+                        let result = null;
+                        try {
+                            result = await ApiClient.get(`/CodigoVerificacion/crear/${correo}`);
+                        } catch (err) {
+                            console.warn("Respuesta vacía del servidor:", err);
+                        }
+                        
+                        UIHelpers.showToast("Código reenviado exitosamente", "success");
+                        this.iniciarCountdownReenvio();
+                        
+                    } catch (error) {
+                        console.error("Error reenviando código:", error);
+                        UIHelpers.showToast("Error al reenviar el código", "danger");
+                        resendBtn.disabled = false;
+                    }
+                }
+            });
+        }
+        
+        // Validación en tiempo real del input
+        const codeInput = document.getElementById("verificationCodeInput");
+        if (codeInput) {
+            codeInput.addEventListener("input", function(e) {
+                // Solo permitir números
+                this.value = this.value.replace(/[^0-9]/g, "");
+                
+                // Validar longitud
+                if (this.value.length === 6) {
+                    this.classList.remove("is-invalid");
+                    this.classList.add("is-valid");
+                } else {
+                    this.classList.remove("is-valid");
+                }
+            });
+            
+            // Permitir verificar con Enter
+            codeInput.addEventListener("keypress", function(e) {
+                if (e.key === "Enter" && this.value.length === 6) {
+                    document.getElementById("verifyCodeBtn").click();
+                }
+            });
+        }
+        
+        // Limpiar estado cuando se cierra el modal
+        const verifyModal = document.getElementById("verifyCodeModal");
+        if (verifyModal) {
+            verifyModal.addEventListener("hidden.bs.modal", () => {
+                if (this.resendCountdownInterval) {
+                    clearInterval(this.resendCountdownInterval);
+                }
+                if (codeInput) {
+                    codeInput.value = "";
+                    codeInput.classList.remove("is-invalid", "is-valid");
+                }
+                const countdownDisplay = document.getElementById("resendCountdown");
+                if (countdownDisplay) {
+                    countdownDisplay.textContent = "";
+                }
+            });
+        }
+    }
+
+    // ==================== FUNCIONES DEL MODAL DE VERIFICACIÓN ====================
+    
+    // Función para iniciar countdown de reenvío (60 segundos)
+    iniciarCountdownReenvio() {
+        const resendBtn = document.getElementById("resendCodeBtn");
+        const countdownDisplay = document.getElementById("resendCountdown");
+        
+        if (!resendBtn || !countdownDisplay) return;
+        
+        let segundosRestantes = 60;
+        resendBtn.disabled = true;
+        
+        // Limpiar cualquier intervalo previo
+        if (this.resendCountdownInterval) {
+            clearInterval(this.resendCountdownInterval);
+        }
+        
+        this.resendCountdownInterval = setInterval(() => {
+            segundosRestantes--;
+            
+            if (segundosRestantes > 0) {
+                countdownDisplay.textContent = `Podrás reenviar en ${segundosRestantes} segundos`;
+            } else {
+                clearInterval(this.resendCountdownInterval);
+                resendBtn.disabled = false;
+                countdownDisplay.textContent = "";
+            }
+        }, 1000);
+    }
+
+    // Cerrar modal y limpiar todo
+    cerrarModalVerificacion() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById("verifyCodeModal"));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Limpiar intervalos
+        if (this.resendCountdownInterval) {
+            clearInterval(this.resendCountdownInterval);
+        }
+        
+        // Limpiar campos
+        const codeInput = document.getElementById("verificationCodeInput");
+        if (codeInput) {
+            codeInput.value = "";
+            codeInput.classList.remove("is-invalid", "is-valid");
+        }
+        
+        const countdownDisplay = document.getElementById("resendCountdown");
+        if (countdownDisplay) {
+            countdownDisplay.textContent = "";
+        }
     }
 
     // ==================== FORMULARIOS DE AUTENTICACIÓN ====================
@@ -229,7 +369,7 @@ class IndexPageManager {
         }
     }
 
-    // NUEVA FUNCIÓN: Mostrar/ocultar indicador de carga en email
+    // Mostrar/ocultar indicador de carga en email
     mostrarCargandoEmail(inputElement, mostrar) {
         let spinner = inputElement.parentNode.querySelector('.email-spinner');
 
@@ -250,7 +390,7 @@ class IndexPageManager {
         }
     }
 
-    // NUEVA FUNCIÓN: Limpiar estado de validación de email
+    // Limpiar estado de validación de email
     limpiarEstadoEmail(tipo) {
         const inputId = tipo === 'client' ? 'clientEmail' : 'trainerEmail';
         const emailInput = document.getElementById(inputId);
@@ -267,7 +407,7 @@ class IndexPageManager {
         }
     }
 
-    // NUEVA FUNCIÓN: Abrir modal de login
+    // Abrir modal de login
     abrirLogin() {
         // Cerrar modales de registro
         const registerClientModal = bootstrap.Modal.getInstance(document.getElementById('registerClientModal'));
@@ -283,6 +423,81 @@ class IndexPageManager {
         }, 300);
     }
 
+    // ==================== VERIFICACIÓN DE CÓDIGO ====================
+    
+    // Enviar código al correo
+    async enviarCodigoVerificacion(correo) {
+        try {
+            let result = null;
+            try {
+                result = await ApiClient.get(`/CodigoVerificacion/crear/${correo}`);
+            } catch (err) {
+                console.warn("Respuesta vacía del servidor (esto es normal para /crear):", err);
+            }
+        
+            console.log("Respuesta de verificación:", result);
+        
+            // Mostrar modal
+            document.getElementById("verifyEmailDisplay").textContent = correo;
+            
+            // Limpiar el input antes de mostrar
+            const codeInput = document.getElementById("verificationCodeInput");
+            if (codeInput) {
+                codeInput.value = "";
+                codeInput.classList.remove("is-invalid", "is-valid");
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById("verifyCodeModal"));
+            modal.show();
+            
+            // Iniciar countdown para reenvío
+            this.iniciarCountdownReenvio();
+        
+            UIHelpers.showToast("Se ha enviado un código de verificación a tu correo.", "info");
+            return true;
+        
+        } catch (error) {
+            console.error("Error enviando código:", error);
+            UIHelpers.showToast("No se pudo enviar el código de verificación.", "danger");
+            return false;
+        }
+    }
+
+    // Verificar código ingresado
+    async verificarCodigoCorreo(correo, codigo) {
+        try {
+            // Mostrar spinner de verificación
+            const spinner = document.getElementById("verifySpinner");
+            const btn = document.getElementById("verifyCodeBtn");
+            
+            if (spinner) spinner.classList.remove("d-none");
+            if (btn) btn.disabled = true;
+
+            // Llamada al endpoint de verificación
+            const result = await ApiClient.get(`/CodigoVerificacion/verificar/${correo}/${codigo}`);
+
+            const esValido = result === true || result === "true";
+            
+            // Ocultar spinner
+            if (spinner) spinner.classList.add("d-none");
+            if (btn) btn.disabled = false;
+
+            return esValido;
+        } catch (error) {
+            console.error("Error verificando código:", error);
+            
+            // Ocultar spinner
+            const spinner = document.getElementById("verifySpinner");
+            const btn = document.getElementById("verifyCodeBtn");
+            if (spinner) spinner.classList.add("d-none");
+            if (btn) btn.disabled = false;
+            
+            return false;
+        }
+    }
+
+    // ==================== MANEJO DE LOGIN ====================
+    
     async handleLogin(e) {
         e.preventDefault();
 
@@ -362,10 +577,10 @@ class IndexPageManager {
         } finally {
             UIHelpers.showButtonSpinner(loginBtn, false);
         }
-    }   
+    }
 
-    /////////////////////////////////////////////////////////////////////////////
-
+    // ==================== REGISTRO DE CLIENTE ====================
+    
     async handleClientRegister(e) {
         e.preventDefault();
 
@@ -379,18 +594,26 @@ class IndexPageManager {
                 return;
             }
 
-            // NUEVA VALIDACIÓN: Verificar que el email esté disponible
+            // Validar disponibilidad del correo
             if (!this.emailAvailable.client) {
                 UIHelpers.showToast('Por favor usa un correo electrónico diferente', 'warning');
                 return;
             }
 
+            const contrasenia = document.getElementById('clientPassword').value;
+            const confirmPassword = document.getElementById('clientConfirmPassword').value;
+
+            if (!Validator.passwordsMatch(contrasenia, confirmPassword)) {
+                UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
+                return;
+            }
+
             const formData = {
                 idCliente: null,
-                nombres: document.getElementById('clientFirstName').value.trim() || "", 
-                apellidos: document.getElementById('clientLastName').value.trim() || "",
+                nombres: document.getElementById('clientFirstName').value.trim(),
+                apellidos: document.getElementById('clientLastName').value.trim(),
                 correo: document.getElementById('clientEmail').value.trim(),
-                contrasenia: document.getElementById('clientPassword').value,
+                contrasenia: contrasenia,
                 fotoPerfil: null,
                 fechaNacimiento: null,
                 estatura: null,
@@ -402,37 +625,65 @@ class IndexPageManager {
                 resenias: []
             };
 
-            const contrasenia = document.getElementById('clientPassword').value;
-            const confirmPassword = document.getElementById('clientConfirmPassword').value;
+            // Paso 1: Enviar código de verificación
+            const enviado = await this.enviarCodigoVerificacion(formData.correo);
+            if (!enviado) return;
 
-            // Validación adicional de contraseñas
-            if (!Validator.passwordsMatch(contrasenia, confirmPassword)) {
-                UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
-                return;
-            }
+            // Paso 2: Configurar el evento del botón de verificar
+            // Remover eventos anteriores para evitar duplicados
+            const verifyBtn = document.getElementById("verifyCodeBtn");
+            const newVerifyBtn = verifyBtn.cloneNode(true);
+            verifyBtn.parentNode.replaceChild(newVerifyBtn, verifyBtn);
+            
+            newVerifyBtn.onclick = async () => {
+                const codigo = document.getElementById("verificationCodeInput").value.trim();
+                const codeInput = document.getElementById("verificationCodeInput");
+                
+                if (!codigo || codigo.length !== 6) {
+                    codeInput.classList.add("is-invalid");
+                    UIHelpers.showToast("Por favor ingresa un código válido de 6 dígitos.", "warning");
+                    return;
+                }
 
-            const response = await ApiClient.post('/Cliente/crear', formData);
+                // Paso 3: Verificar código con backend
+                const verificado = await this.verificarCodigoCorreo(formData.correo, codigo);
+                
+                if (!verificado) {
+                    codeInput.classList.add("is-invalid");
+                    UIHelpers.showToast("Código incorrecto. Intenta nuevamente.", "danger");
+                    return;
+                }
 
-            if (response) {
-                // Cerrar modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('registerClientModal'));
-                modal.hide();
+                // Paso 4: Crear cliente si el código es correcto
+                try {
+                    const response = await ApiClient.post('/Cliente/crear', formData);
+                    
+                    if (response) {
+                        // Cerrar modal de verificación
+                        this.cerrarModalVerificacion();
 
-                // Limpiar formulario
-                document.getElementById('registerClientForm').reset();
-                this.limpiarEstadoEmail('client');
+                        // Cerrar modal de registro
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('registerClientModal'));
+                        if (modal) modal.hide();
 
-                // Mostrar mensaje de éxito
-                UIHelpers.showToast('¡Registro exitoso! Por favor inicia sesión.', 'success');
+                        document.getElementById('registerClientForm').reset();
+                        this.limpiarEstadoEmail('client');
 
-                // Abrir modal de login
-                setTimeout(() => {
-                    const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-                    loginModal.show();
-                }, 500);
-            } else {
-                throw new Error('Error en el registro');
-            }
+                        UIHelpers.showToast('¡Correo verificado y registro exitoso!', 'success');
+
+                        // Abrir login después del registro
+                        setTimeout(() => {
+                            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                            loginModal.show();
+                        }, 600);
+                    } else {
+                        UIHelpers.showToast('Error al crear el usuario.', 'danger');
+                    }
+                } catch (error) {
+                    console.error("Error creando cliente:", error);
+                    UIHelpers.showToast('Error al crear el usuario.', 'danger');
+                }
+            };
 
         } catch (error) {
             console.error('Register error:', error);
@@ -442,7 +693,8 @@ class IndexPageManager {
         }
     }
 
-    // ACTUALIZAR handleTrainerRegister - Agregar validación de email
+    // ==================== REGISTRO DE ENTRENADOR ====================
+    
     async handleTrainerRegister(e) {
         e.preventDefault();
 
@@ -456,15 +708,14 @@ class IndexPageManager {
                 return;
             }
 
-            // NUEVA VALIDACIÓN: Verificar que el email esté disponible
+            // Validar disponibilidad del correo
             if (!this.emailAvailable.trainer) {
                 UIHelpers.showToast('Por favor usa un correo electrónico diferente', 'warning');
                 return;
             }
 
-            // Validación adicional de contraseñas
-            const confirmPassword = document.getElementById('trainerConfirmPassword').value;
             const password = document.getElementById('trainerPassword').value;
+            const confirmPassword = document.getElementById('trainerConfirmPassword').value;
 
             if (password !== confirmPassword) {
                 UIHelpers.showToast('Las contraseñas no coinciden', 'danger');
@@ -486,23 +737,59 @@ class IndexPageManager {
                 servicios: []
             };
 
-            const response = await ApiClient.post('/Entrenador/crear', formData);
+            // Paso 1: Enviar código de verificación
+            const enviado = await this.enviarCodigoVerificacion(formData.correo);
+            if (!enviado) return;
 
-            if (response) {
-                // Cerrar modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('registerTrainerModal'));
-                modal.hide();
+            // Paso 2: Configurar el evento del botón de verificar
+            // Remover eventos anteriores para evitar duplicados
+            const verifyBtn = document.getElementById("verifyCodeBtn");
+            const newVerifyBtn = verifyBtn.cloneNode(true);
+            verifyBtn.parentNode.replaceChild(newVerifyBtn, verifyBtn);
+            
+            newVerifyBtn.onclick = async () => {
+                const codigo = document.getElementById("verificationCodeInput").value.trim();
+                const codeInput = document.getElementById("verificationCodeInput");
+                
+                if (!codigo || codigo.length !== 6) {
+                    codeInput.classList.add("is-invalid");
+                    UIHelpers.showToast("Por favor ingresa un código válido de 6 dígitos.", "warning");
+                    return;
+                }
 
-                // Limpiar formulario
-                document.getElementById('registerTrainerForm').reset();
-                this.limpiarEstadoEmail('trainer');
+                // Paso 3: Verificar código
+                const verificado = await this.verificarCodigoCorreo(formData.correo, codigo);
+                
+                if (!verificado) {
+                    codeInput.classList.add("is-invalid");
+                    UIHelpers.showToast("Código incorrecto. Intenta nuevamente.", "danger");
+                    return;
+                }
 
-                // Mostrar mensaje de éxito
-                UIHelpers.showToast('¡Registro exitoso! Tu cuenta será revisada en 24-48 horas.', 'success');
+                // Paso 4: Crear entrenador si el código es correcto
+                try {
+                    const response = await ApiClient.post('/Entrenador/crear', formData);
+                    
+                    if (response) {
+                        // Cerrar modal de verificación
+                        this.cerrarModalVerificacion();
 
-            } else {
-                throw new Error('Error en el registro');
-            }
+                        // Cerrar modal de registro
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('registerTrainerModal'));
+                        if (modal) modal.hide();
+
+                        document.getElementById('registerTrainerForm').reset();
+                        this.limpiarEstadoEmail('trainer');
+
+                        UIHelpers.showToast('¡Correo verificado y registro exitoso!', 'success');
+                    } else {
+                        UIHelpers.showToast('Error al crear el entrenador.', 'danger');
+                    }
+                } catch (error) {
+                    console.error("Error creando entrenador:", error);
+                    UIHelpers.showToast('Error al crear el entrenador.', 'danger');
+                }
+            };
 
         } catch (error) {
             console.error('Trainer register error:', error);
@@ -597,7 +884,7 @@ class IndexPageManager {
         }
     }
 
-    // NUEVA FUNCIÓN: Mapear resultados del API al formato de visualización
+    // Mapear resultados del API al formato de visualización
     mapApiResultsToDisplayFormat(apiResults) {
         if (!Array.isArray(apiResults)) {
             console.error('Los resultados no son un array:', apiResults);
@@ -607,13 +894,13 @@ class IndexPageManager {
         return apiResults.map(servicio => ({
             id: servicio.idServicio,
             title: servicio.nombre,
-            type: 'Entrenador', // Siempre es entrenador según tu estructura
+            type: 'Entrenador',
             name: servicio.entrenador ? `${servicio.entrenador.nombres} ${servicio.entrenador.apellidos}` : 'Entrenador',
             location: servicio.ubicacion,
             price: servicio.precio,
-            rating: 4.5, // Por defecto, puedes calcular esto si tienes reseñas
-            reviews: 0, // Por defecto, actualizar si tienes el dato
-            image: this.getDefaultImageByDeporte(servicio.deporte), // Imagen por deporte
+            rating: 4.5,
+            reviews: 0,
+            image: this.getDefaultImageByDeporte(servicio.deporte),
             available: servicio.estado === 'Activo',
             sport: servicio.deporte,
             experience: servicio.nivel,
@@ -625,7 +912,7 @@ class IndexPageManager {
         }));
     }
 
-    // NUEVA FUNCIÓN: Obtener imagen por defecto según el deporte
+    // Obtener imagen por defecto según el deporte
     getDefaultImageByDeporte(deporte) {
         const imageMap = {
             'Fútbol': 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
@@ -749,7 +1036,7 @@ class IndexPageManager {
         return card;
     }
 
-    // NUEVA FUNCIÓN: Truncar texto
+    // Truncar texto
     truncateText(text, maxLength) {
         if (!text) return 'Sin descripción disponible';
         if (text.length <= maxLength) return text;
@@ -895,44 +1182,17 @@ class IndexPageManager {
             // Preparar datos de la sesión
             const sesionData = {
                 idSesion: null,
-                fechaHora: this.obtenerProximaFechaDisponible(), // Fecha/hora actual o próxima disponible
-                estado: "Pendiente", // O "Confirmada" según tu lógica
+                fechaHora: null,
+                estado: "Pendiente",
                 cliente: {
-                    idCliente: user.idCliente//,
-                    //nombres: user.nombres,
-                    //apellidos: user.apellidos,
-                    //correo: user.correo,
-                    //contrasenia: user.contrasenia,
-                    //fotoPerfil: user.fotoPerfil || null,
-                    //fechaNacimiento: user.fechaNacimiento || null,
-                    //estatura: user.estatura || null,
-                    //peso: user.peso || null,
-                    //telefono: user.telefono || null,
-                    //ubicacion: user.ubicacion || null,
-                    //fechaRegistro: user.fechaRegistro || null
+                    idCliente: user.idCliente
                 },
                 entrenador: {
-                    idEntrenador: servicio.entrenadorId//,
-                    //nombres: servicio.name.split(' ')[0],
-                    //apellidos: servicio.name.split(' ').slice(1).join(' '),
-                    //correo: servicio.entrenadorEmail || '',
-                    //contrasenia: '', // No es necesario enviarlo
-                    //especialidad: [servicio.sport],
-                    //certificaciones: [],
-                    //fotoPerfil: null,
-                    //fechaRegistro: null
+                    idEntrenador: servicio.entrenadorId
                 },
                 servicio: {
                     idServicio: servicioId,
-                    //nombre: servicio.title,
-                    //descripcion: servicio.description,
-                    //precio: servicio.price,
-                    //deporte: servicio.sport,
-                    //nivel: servicio.experience,
-                    //duracion: servicio.duracion,
-                    cuposDisponibles: servicio.cuposDisponibles - 1, // Reducir cupo
-                    //estado: servicio.available ? "Activo" : "Inactivo",
-                    //ubicacion: servicio.location
+                    cuposDisponibles: servicio.cuposDisponibles - 1
                 }
             };
 
@@ -980,16 +1240,11 @@ class IndexPageManager {
         }
     }
 
-// NUEVA FUNCIÓN: Obtener próxima fecha disponible (formato LocalDateTime para Java)
+    // Obtener próxima fecha disponible (formato LocalDateTime para Java)
     obtenerProximaFechaDisponible() {
-        // Obtener fecha/hora actual
         const ahora = new Date();
-
-        // Sumar 1 día para la sesión (puedes ajustar esto según tu lógica)
         const proximaFecha = new Date(ahora.getTime() + (24 * 60 * 60 * 1000));
 
-        // Formatear a ISO 8601 compatible con LocalDateTime de Java
-        // Formato: "2025-11-03T10:00:00"
         const year = proximaFecha.getFullYear();
         const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
         const day = String(proximaFecha.getDate()).padStart(2, '0');
@@ -1045,7 +1300,6 @@ class IndexPageManager {
     }
 
     initializeMap() {
-        // TODO: Implementar inicialización del mapa con Google Maps o similar
         const mapContainer = document.getElementById('map');
         if (mapContainer) {
             mapContainer.innerHTML = `
@@ -1059,156 +1313,6 @@ class IndexPageManager {
             `;
         }
         console.log('Mapa inicializado con resultados:', this.currentResults);
-    }
-
-    // ==================== SIMULACIONES DE API (TEMPORAL) ====================
-    async simulateLoginAPI(credentials) {
-        // Simulación de delay de red
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Validación simple para la demo
-        if (credentials.email === 'demo@sportlink.com' && credentials.password === 'Jp123456') {
-            return {
-                success: true,
-                token: 'fake-jwt-token-' + Date.now(),
-                user: {
-                    id: 1,
-                    name: 'Usuario Demo',
-                    email: credentials.email,
-                    type: 'client'
-                }
-            };
-        } else {
-            return {
-                success: false,
-                message: 'Credenciales incorrectas. Usa: demo@sportlink.com / 123456'
-            };
-        }
-    }
-
-    async simulateRegisterAPI(formData) {
-        // Simulación de delay de red
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        return {
-            success: true,
-            message: 'Usuario registrado exitosamente'
-        };
-    }
-
-    async simulateTrainerRegisterAPI(formData) {
-        // Simulación de delay de red
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        return {
-            success: true,
-            message: 'Entrenador registrado exitosamente'
-        };
-    }
-
-    async simulateSearchAPI(filters) {
-        // Simulación de delay de red
-        await new Promise(resolve => setTimeout(resolve, 1200));
-        
-        // Datos de ejemplo filtrados según los criterios
-        const allResults = [
-            {
-                id: 1,
-                title: "Clases de Fútbol Avanzado",
-                type: "Entrenador",
-                name: "Prof. Carlos Martínez",
-                location: "Chapinero, Bogotá",
-                price: 80000,
-                rating: 4.8,
-                reviews: 45,
-                image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                available: true,
-                sport: "Fútbol",
-                experience: "Avanzado",
-                description: "Entrenador profesional con más de 10 años de experiencia formando jugadores. Especializado en técnica individual y táctica de juego."
-            },
-            {
-                id: 2,
-                title: "Escuela de Tenis La Sabana",
-                type: "Centro deportivo",
-                name: "",
-                location: "Usaquén, Bogotá",
-                price: 120000,
-                rating: 4.6,
-                reviews: 32,
-                image: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                available: true,
-                sport: "Tenis",
-                experience: "Todos los niveles",
-                description: "Canchas de tenis profesionales con iluminación LED. Ofrecemos clases para todas las edades y niveles."
-            },
-            {
-                id: 3,
-                title: "Natación para adultos",
-                type: "Entrenador",
-                name: "Prof. Laura Gómez",
-                location: "Teusaquillo, Bogotá",
-                price: 70000,
-                rating: 4.9,
-                reviews: 28,
-                image: "https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                available: true,
-                sport: "Natación",
-                experience: "Principiante/Intermedio",
-                description: "Clases personalizadas de natación para adultos. Enfoque en técnica y superación del miedo al agua."
-            },
-            {
-                id: 4,
-                title: "CrossFit Zona Norte",
-                type: "Centro deportivo",
-                name: "",
-                location: "Suba, Bogotá",
-                price: 95000,
-                rating: 4.7,
-                reviews: 67,
-                image: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                available: true,
-                sport: "Crossfit",
-                experience: "Todos los niveles",
-                description: "Gimnasio especializado en CrossFit con equipos de última generación y entrenadores certificados."
-            },
-            {
-                id: 5,
-                title: "Boxeo Profesional",
-                type: "Entrenador",
-                name: "Prof. Miguel Herrera",
-                location: "Kennedy, Bogotá",
-                price: 60000,
-                rating: 4.5,
-                reviews: 23,
-                image: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                available: false,
-                sport: "Boxeo",
-                experience: "Intermedio/Avanzado",
-                description: "Entrenamiento de boxeo profesional. Técnicas de combate, acondicionamiento físico y defensa personal."
-            }
-        ];
-        
-        // Filtrar por deporte
-        let filteredResults = allResults.filter(item => 
-            item.sport.toLowerCase().includes(filters.sport.toLowerCase())
-        );
-        
-        // Filtrar por precio
-        filteredResults = filteredResults.filter(item => 
-            item.price <= filters.maxPrice
-        );
-        
-        // Filtrar por tipo de servicio
-        if (!filters.includeCenters || !filters.includeTrainers) {
-            filteredResults = filteredResults.filter(item => {
-                if (filters.includeCenters && item.type === "Centro deportivo") return true;
-                if (filters.includeTrainers && item.type === "Entrenador") return true;
-                return false;
-            });
-        }
-        
-        return filteredResults;
     }
 }
 

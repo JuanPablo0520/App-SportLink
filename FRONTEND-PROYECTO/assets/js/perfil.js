@@ -11,8 +11,6 @@ class PerfilPageManager {
         this.init();
     }
 
-    /* REEMPLAZAR la función init() en assets/js/perfil.js */
-
     init() {
         // Verificar autenticación
         if (!AuthManager.requireAuth()) {
@@ -31,6 +29,7 @@ class PerfilPageManager {
         this.loadUserProfile();
         this.loadScheduledSessions();
         this.loadCompletedSessions();
+
     }
 
     // ==================== EVENT LISTENERS ====================
@@ -102,47 +101,6 @@ class PerfilPageManager {
     }
 
     // ==================== CARGA DE DATOS ====================
-    //async loadUserProfile() {
-    //    try {
-    //        // TODO: Reemplazar con llamada real al API
-    //        // const userData = await ApiClient.get('/user/profile', true);
-    //        
-    //        // Simulación temporal
-    //        const userData = await this.simulateGetUserProfile();
-    //        
-    //        this.populateUserData(userData);
-    //        this.originalFormData = this.getFormData();
-//
-    //    } catch (error) {
-    //        console.error('Error loading user profile:', error);
-    //        UIHelpers.showToast('Error al cargar el perfil de usuario', 'danger');
-    //    }
-    //}
-
-    // CARGAR PERFIL DE USUARIO
-    //async loadUserProfile() {
-    //    try {
-    //        const currentUser = AuthManager.getUser();
-    //        if (!currentUser || !currentUser.idCliente) {
-    //            throw new Error('Usuario no autenticado');
-    //        }
-//
-    //        // Obtener datos actualizados del cliente
-    //        const userData = await ApiClient.get(`/Cliente/obtener/${currentUser.idCliente}`);
-//
-    //        if (userData) {
-    //            this.populateUserData(userData);
-    //            this.originalFormData = this.getFormData();
-    //        } else {
-    //            throw new Error('No se encontraron datos del usuario');
-    //        }
-//
-    //    } catch (error) {
-    //        console.error('Error loading user profile:', error);
-    //        UIHelpers.showToast('Error al cargar el perfil de usuario', 'danger');
-    //    }
-    //}
-
     async loadUserProfile() {
         try {
             const currentUser = AuthManager.getUser();
@@ -250,6 +208,7 @@ class PerfilPageManager {
             );
 
             const resultados = await Promise.all(peticiones);
+            console.log("Sesiones agendadas: ", resultados)
 
             // Combinar todas las sesiones de los distintos estados
             const todasLasSesiones = resultados.flat();
@@ -295,7 +254,7 @@ class PerfilPageManager {
             }
         
             const idCliente = currentUser.idCliente;
-            const estados = ['completada', 'finalizada'];
+            const estados = ['Completada', 'Finalizada'];
         
             // Obtener sesiones completadas y finalizadas en paralelo
             const peticiones = estados.map(estado =>
@@ -394,102 +353,6 @@ class PerfilPageManager {
     }
 
     // ==================== MANEJO DE FORMULARIOS ====================
-    //async handleProfileUpdate(e) {
-    //    e.preventDefault();
-    //    
-    //    const submitBtn = e.target.querySelector('button[type="submit"]');
-    //    const spinner = document.getElementById('saveSpinner');
-    //    
-    //    try {
-    //        if (!Validator.validateForm(e.target)) {
-    //            UIHelpers.showToast('Por favor corrige los errores en el formulario', 'warning');
-    //            return;
-    //        }
-//
-    //        UIHelpers.showButtonSpinner(submitBtn, true);
-//
-    //        const formData = this.getFormData();
-    //        
-    //        // TODO: Reemplazar con llamada real al API
-    //        // const response = await ApiClient.put('/user/profile', formData, true);
-    //        
-    //        // Simulación temporal
-    //        const response = await this.simulateUpdateProfile(formData);
-    //        
-    //        if (response.success) {
-    //            // Actualizar datos originales
-    //            this.originalFormData = formData;
-    //            
-    //            // Actualizar datos en AuthManager
-    //            const user = AuthManager.getUser();
-    //            AuthManager.login(AuthManager.getToken(), { ...user, ...formData });
-    //            
-    //            UIHelpers.showToast('Perfil actualizado exitosamente', 'success');
-    //            
-    //            // Actualizar header
-    //            document.getElementById('profileName').textContent = `${formData.firstName} ${formData.lastName}`;
-    //        } else {
-    //            throw new Error(response.message || 'Error al actualizar perfil');
-    //        }
-//
-    //    } catch (error) {
-    //        console.error('Profile update error:', error);
-    //        UIHelpers.showToast(error.message || 'Error al actualizar el perfil', 'danger');
-    //    } finally {
-    //        UIHelpers.showButtonSpinner(submitBtn, false);
-    //    }
-    //}
-//
-    //async handlePasswordChange(e) {
-    //    e.preventDefault();
-    //    
-    //    const submitBtn = e.target.querySelector('button[type="submit"]');
-    //    const spinner = document.getElementById('passwordSpinner');
-    //    
-    //    try {
-    //        if (!Validator.validateForm(e.target)) {
-    //            UIHelpers.showToast('Por favor corrige los errores en el formulario', 'warning');
-    //            return;
-    //        }
-//
-    //        const currentPassword = document.getElementById('currentPassword').value;
-    //        const newPassword = document.getElementById('newPassword').value;
-    //        const confirmPassword = document.getElementById('confirmNewPassword').value;
-//
-    //        // Validar que las contraseñas coincidan
-    //        if (!Validator.passwordsMatch(newPassword, confirmPassword)) {
-    //            UIHelpers.showToast('Las contraseñas nuevas no coinciden', 'danger');
-    //            return;
-    //        }
-//
-    //        UIHelpers.showButtonSpinner(submitBtn, true);
-//
-    //        const passwordData = {
-    //            currentPassword,
-    //            newPassword
-    //        };
-//
-    //        // TODO: Reemplazar con llamada real al API
-    //        // const response = await ApiClient.put('/user/password', passwordData, true);
-    //        
-    //        // Simulación temporal
-    //        const response = await this.simulateChangePassword(passwordData);
-    //        
-    //        if (response.success) {
-    //            UIHelpers.showToast('Contraseña cambiada exitosamente', 'success');
-    //            document.getElementById('passwordForm').reset();
-    //        } else {
-    //            throw new Error(response.message || 'Error al cambiar contraseña');
-    //        }
-//
-    //    } catch (error) {
-    //        console.error('Password change error:', error);
-    //        UIHelpers.showToast(error.message || 'Error al cambiar la contraseña', 'danger');
-    //    } finally {
-    //        UIHelpers.showButtonSpinner(submitBtn, false);
-    //    }
-    //}
-
     // ACTUALIZAR PERFIL
     async handleProfileUpdate(e) {
         e.preventDefault();
@@ -576,9 +439,6 @@ class PerfilPageManager {
             UIHelpers.showButtonSpinner(submitBtn, false);
         }
     }
-
-
-    
 
     resetFormData() {
         UIHelpers.showConfirmModal(
@@ -919,11 +779,25 @@ class PerfilPageManager {
             UIHelpers.showButtonSpinner(submitBtn, true);
         
             // Buscar la sesión
-            const sesion = this.completedSessions.find(s => s.id === sessionId);
+            // Obtener sesión actual
+            let sesion = this.completedSessions;
             if (!sesion) {
-                throw new Error('Sesión no encontrada');
+                console.error("completedSessions VACÍO. allSessions:", this.completedSessions);
+                throw new Error("No hay sesión activa seleccionada");
             }
-        
+            // Validar que coincida el ID
+            if (String(sesion.id) !== String(sessionId) && String(sesion.idSesion) !== String(sessionId)) {
+                console.warn("IDs no coinciden entre modal y completedSessions. Rebuscando...");
+                sesion = this.completedSessions.find(s => String(s.id) === String(sessionId) || String(s.idSesion) === String(sessionId));
+            }
+            if (!sesion) {
+                throw new Error("Sesión no encontrada tras fallback");
+            }
+
+            //const sesion = this.completedSessions.find(s => s.id === sessionId);
+            //if (!sesion) {
+            //    throw new Error('Sesión no encontrada');
+            //}
             const currentUser = AuthManager.getUser();
             
             // Crear reseña
@@ -934,33 +808,12 @@ class PerfilPageManager {
                 fecha: new Date().toISOString().split('T')[0],
                 cliente: {
                     idCliente: currentUser.idCliente,
-                    nombres: currentUser.nombres,
-                    apellidos: currentUser.apellidos,
-                    correo: currentUser.correo,
-                    contrasenia: currentUser.contrasenia,
-                    fotoPerfil: currentUser.fotoPerfil || null,
-                    fechaNacimiento: currentUser.fechaNacimiento || null,
-                    estatura: currentUser.estatura || null,
-                    peso: currentUser.peso || null,
-                    telefono: currentUser.telefono || null,
-                    ubicacion: currentUser.ubicacion || null,
-                    fechaRegistro: currentUser.fechaRegistro || null
                 },
                 entrenador: {
                     idEntrenador: sesion.entrenadorId,
-                    nombres: sesion.trainerName.split(' ')[0],
-                    apellidos: sesion.trainerName.split(' ').slice(1).join(' '),
-                    correo: sesion.entrenadorEmail || '',
-                    contrasenia: '',
-                    especialidad: [sesion.sport],
-                    certificaciones: [],
-                    fotoPerfil: null,
-                    fechaRegistro: null
                 },
                 sesion: {
                     idSesion: sesion.idSesion,
-                    fechaHora: sesion.dateTime,
-                    estado: sesion.status
                 }
             };
         
@@ -995,14 +848,210 @@ class PerfilPageManager {
         }
     }
 
-    showSessionDetails(sessionId) {
-        const session = this.scheduledSessions.find(s => s.id === sessionId) || 
-                       this.completedSessions.find(s => s.id === sessionId);
+showSessionDetails(sessionId) {
+
+        // Obtener sesión actual
+        let session = this.scheduledSessions;
+        if (!session) {
+            console.error("scheduledSessions VACÍO. allSessions:", this.scheduledSessions);
+            throw new Error("No hay sesión activa seleccionada");
+        }
+        // Validar que coincida el ID
+        if (String(session.id) !== String(sessionId) && String(session.idSesion) !== String(sessionId)) {
+            console.warn("IDs no coinciden entre modal y scheduledSessions. Rebuscando...");
+            session = this.scheduledSessions.find(s => String(s.id) === String(sessionId) || String(s.idSesion) === String(sessionId));
+        }
+        if (!session) {
+            throw new Error("Sesión no encontrada tras fallback");
+        }
+        console.log("sesion encontrada 1: ", session)
+        console.log("sesion encontrada: ", sessionId)
+
+        //const session = this.scheduledSessions.find(s => s.id === sessionId) || 
+        //               this.completedSessions.find(s => s.id === sessionId);
+        //
+        //console.log("Sesion encontrada", session)
+        //if (!session) {
+        //    UIHelpers.showToast('Sesión no encontrada', 'danger');
+        //    return;
+        //}
+
+        // Generar contenido del modal
+        const content = this.generateSessionDetailsContent(session);
+        document.getElementById('sessionDetailsContent').innerHTML = content;
+
+        // Configurar botón de contactar
+        const contactBtn = document.getElementById('contactTrainerBtn');
+        contactBtn.onclick = () => {
+            window.location.href = `chat.html?session=${session.id}`;
+        };
+
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('sessionDetailsModal'));
+        modal.show();
+    }
+
+    generateSessionDetailsContent(session) {
+        const isCompleted = this.completedSessions.some(s => s.id === session.id);
+        const statusBadge = this.getStatusBadge(session.status);
         
-        if (session) {
-            // TODO: Implementar modal de detalles de sesión
-            UIHelpers.showToast(`Mostrando detalles de: ${session.title}`, 'info');
-            console.log('Session details:', session);
+        return `
+            <div class="session-details">
+                <!-- Encabezado con estado -->
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h4 class="mb-1">${session.title}</h4>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-trophy"></i> ${session.sport}
+                        </p>
+                    </div>
+                    ${statusBadge}
+                </div>
+
+                <!-- Información del entrenador -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-3 text-muted">
+                            <i class="bi bi-person-circle"></i> Entrenador
+                        </h6>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 50px; height: 50px; font-size: 20px;">
+                                    ${session.trainerName.charAt(0)}
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">${session.trainerName}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-envelope"></i> ${session.entrenadorEmail || 'Email no disponible'}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles de la sesión -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-3 text-muted">
+                            <i class="bi bi-calendar-event"></i> Detalles de la Sesión
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-calendar3 text-primary me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Fecha</small>
+                                        <strong>${UIHelpers.formatDate(session.date)}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-clock text-primary me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Hora</small>
+                                        <strong>${session.time}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-hourglass-split text-primary me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Duración</small>
+                                        <strong>${session.duration} minutos</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-cash-coin text-success me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Precio</small>
+                                        <strong class="text-success">${UIHelpers.formatPrice(session.price)}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-geo-alt text-primary me-2 mt-1"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Ubicación</small>
+                                        <strong>${session.location}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${isCompleted && session.hasReview ? `
+                    <!-- Evaluación -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-3 text-muted">
+                                <i class="bi bi-star"></i> Tu Evaluación
+                            </h6>
+                            <div class="mb-2">
+                                <div class="star-rating d-inline-block me-2">
+                                    ${this.renderStars(session.rating)}
+                                </div>
+                                <span class="text-muted">${session.rating}/5 estrellas</span>
+                            </div>
+                            <p class="mb-0">${session.review || 'Sin comentarios adicionales.'}</p>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${!isCompleted ? `
+                    <!-- Información adicional para sesiones agendadas -->
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Recordatorio:</strong> 
+                        ${this.getSessionReminder(session.dateTime)}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    getStatusBadge(status) {
+        const statusMap = {
+            'Pendiente': { class: 'bg-warning', icon: 'clock-history', text: 'Pendiente' },
+            'Confirmada': { class: 'bg-info', icon: 'check-circle', text: 'Confirmada' },
+            'Activa': { class: 'bg-primary', icon: 'play-circle', text: 'En Curso' },
+            'Completada': { class: 'bg-success', icon: 'check-circle-fill', text: 'Completada' },
+            'Finalizada': { class: 'bg-success', icon: 'check-circle-fill', text: 'Finalizada' },
+            'Cancelada': { class: 'bg-danger', icon: 'x-circle', text: 'Cancelada' }
+        };
+
+        const statusInfo = statusMap[status] || statusMap['Pendiente'];
+        
+        return `
+            <span class="badge ${statusInfo.class} fs-6">
+                <i class="bi bi-${statusInfo.icon}"></i> ${statusInfo.text}
+            </span>
+        `;
+    }
+
+    getSessionReminder(dateTime) {
+        const sessionDate = new Date(dateTime);
+        const now = new Date();
+        const diffTime = sessionDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            return 'Esta sesión ya pasó.';
+        } else if (diffDays === 0) {
+            return 'Tu sesión es HOY. ¡Prepárate!';
+        } else if (diffDays === 1) {
+            return 'Tu sesión es mañana. No olvides confirmar con tu entrenador.';
+        } else if (diffDays <= 3) {
+            return `Tu sesión es en ${diffDays} días. Recuerda llevar ropa deportiva adecuada.`;
+        } else {
+            return `Tu sesión es en ${diffDays} días. Te enviaremos un recordatorio más cerca de la fecha.`;
         }
     }
 

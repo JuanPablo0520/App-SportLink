@@ -89,7 +89,7 @@ class DashboardEntrenadorManager {
             ] = await Promise.all([
                 ApiClient.get(`/Sesion/obtener/estado/Pendiente/idEntrenador/${idEntrenador}`),
                 ApiClient.get(`/Servicio/obtener/idEntrenador/${idEntrenador}/estado/Activo`),
-                ApiClient.get(`/Sesion/obtener/cantClientes/1`),
+                ApiClient.get(`/Sesion/obtener/cantClientes/${idEntrenador}`),
                 ApiClient.get(`/Resenia/obtener/calificacionEntrenador/${idEntrenador}`)
             ]);
 
@@ -188,25 +188,37 @@ class DashboardEntrenadorManager {
         const container = document.getElementById('resenasRecientesContainer');
         
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const resenas = await ApiClient.get(`/Resenia/entrenador/${this.currentTrainer.idEntrenador}/recientes`);
+            const resenas = await ApiClient.get(`/Resenia/obtener/idEntrenador/${this.currentTrainer.idEntrenador}`);
             
-            // Simulación temporal
-            const resenas = await this.simulateGetResenasRecientes();
-            
-            this.resenasRecientes = resenas;
-            this.renderResenasRecientes(resenas);
+            if (!resenas || resenas.length === 0) {
+                this.resenasRecientes = [];
+                this.renderResenasRecientes([]);
+                return;
+            }
 
-            // Actualizar badge de nuevas reseñas
+            // Transformar las reseñas al formato esperado
+            this.resenasRecientes = resenas.map(r => ({
+                idResena: r.idResenia,
+                calificacion: r.calificacion,
+                comentario: r.comentario,
+                clienteNombre: `${r.cliente.nombres} ${r.cliente.apellidos}`,
+                fecha: new Date().toISOString() // Si no hay fecha en la API, usar fecha actual
+                //respondida: false, // Ajustar según tu lógica de negocio
+                //respuesta: null
+            }));
+
+            this.renderResenasRecientes(this.resenasRecientes);
+
+            // Actualizar badge de nuevas reseÃ±as
             const badge = document.getElementById('badgeNuevasResenias');
             if (badge) {
-                const nuevas = resenas.filter(r => !r.respondida).length;
+                const nuevas = this.resenasRecientes.filter(r => !r.respondida).length;
                 badge.textContent = `${nuevas} nueva${nuevas !== 1 ? 's' : ''}`;
             }
 
         } catch (error) {
-            console.error('Error loading reseñas:', error);
-            container.innerHTML = this.getErrorState('Error al cargar las reseñas');
+            console.error('Error loading resenias:', error);
+            container.innerHTML = this.getErrorState('Error al cargar las reseÃ±as');
         }
     }
 
@@ -300,37 +312,28 @@ class DashboardEntrenadorManager {
             );
             return;
         }
-
+    
         let html = '';
         
-        // Mostrar máximo 3 reseñas en el dashboard
-        resenas.slice(0, 3).forEach(resena => {
+        // Mostrar todas las reseñas con diseño compacto pero completo
+        resenas.forEach((resena, index) => {
             html += `
-                <div class="resena-item fade-in">
-                    <div class="resena-header">
-                        <div>
-                            <div class="resena-cliente">${resena.clienteNombre}</div>
-                            <div class="resena-estrellas">
+                <div class="resena-item-complete" style="animation-delay: ${index * 0.05}s">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="resena-cliente-info">
+                            <div class="resena-cliente-name">
+                                <i class="bi bi-person-circle me-2"></i>
+                                ${resena.clienteNombre}
+                            </div>
+                            <div class="resena-stars mt-1">
                                 ${this.renderEstrellas(resena.calificacion)}
                             </div>
                         </div>
-                        <div class="text-end">
-                            <div class="resena-fecha">${UIHelpers.formatDate(resena.fecha)}</div>
-                            ${!resena.respondida ? '<span class="badge bg-warning text-dark">Nueva</span>' : ''}
-                        </div>
                     </div>
-                    <p class="resena-texto">"${resena.comentario}"</p>
-                    ${!resena.respondida ? `
-                        <div class="resena-acciones">
-                            <button class="btn btn-sm btn-outline-primary" onclick="dashboardEntrenadorManager.responderResena('${resena.idResena}')">
-                                <i class="bi bi-reply"></i> Responder
-                            </button>
-                        </div>
-                    ` : resena.respuesta ? `
-                        <div class="resena-acciones">
-                            <small class="text-muted"><strong>Tu respuesta:</strong> ${resena.respuesta}</small>
-                        </div>
-                    ` : ''}
+                    <p class="resena-comentario mb-0">
+                        <i class="bi bi-chat-quote text-muted me-2"></i>
+                        "${resena.comentario}"
+                    </p>
                 </div>
             `;
         });

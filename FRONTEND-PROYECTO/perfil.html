@@ -219,7 +219,7 @@
         </div>
     </div>
 
-    <!-- Modal para cambio de avatar -->
+<!-- Modal para cambio de avatar -->
     <div class="modal fade" id="avatarModal" tabindex="-1">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
@@ -241,6 +241,31 @@
                     <button type="button" class="btn btn-primary" id="saveAvatarBtn" disabled>
                         <span class="spinner-border spinner-border-sm d-none me-2" id="avatarSpinner"></span>
                         Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de detalles de sesión -->
+    <div class="modal fade" id="sessionDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-info-circle"></i> Detalles de la Sesión
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="sessionDetailsContent">
+                        <!-- El contenido se cargará dinámicamente -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="contactTrainerBtn">
+                        <i class="bi bi-chat-dots"></i> Contactar Entrenador
                     </button>
                 </div>
             </div>

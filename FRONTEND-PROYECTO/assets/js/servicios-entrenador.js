@@ -152,8 +152,8 @@ class ServiciosEntrenadorManager {
                 <div class="col-lg-4 col-md-6">
                     <div class="servicio-card">
                         <div class="servicio-card-header">
-                            <span class="servicio-status-badge ${servicio.estado ? 'Activo' : 'Inactivo'}">
-                                ${servicio.estado ? 'Activo' : 'Inactivo'}
+                            <span class="servicio-status-badge ${servicio.estado === 'Activo' ? 'Activo' : 'Inactivo'}">
+                                ${servicio.estado === 'Activo' ? 'Activo' : 'Inactivo'}
                             </span>
                             <h3 class="servicio-nombre">${servicio.nombre}</h3>
                             <span class="servicio-deporte-tag">${servicio.deporte}</span>
@@ -169,7 +169,7 @@ class ServiciosEntrenadorManager {
                                 </div>
                                 <div class="servicio-info-item">
                                     <i class="bi bi-people"></i>
-                                    <span><span class="servicio-info-label">Modalidad:</span> ${servicio.modalidad}</span>
+                                    <span><span class="servicio-info-label">Cupos Disponibles:</span> ${servicio.cuposDisponibles}</span>
                                 </div>
                                 <div class="servicio-info-item">
                                     <i class="bi bi-clock"></i>
@@ -192,8 +192,8 @@ class ServiciosEntrenadorManager {
                                 <i class="bi bi-pencil"></i> Editar
                             </button>
                             <button class="btn btn-toggle-estado" onclick="serviciosEntrenadorManager.toggleEstado(${servicio.idServicio})">
-                                <i class="bi bi-${servicio.activo ? 'eye-slash' : 'eye'}"></i> 
-                                ${servicio.estado ? 'Desactivar' : 'Activar'}
+                                <i class="bi bi-${servicio.estado === 'Activo' ? 'eye-slash' : 'eye'}"></i> 
+                                ${servicio.estado === 'Activo' ? 'Desactivar' : 'Activar'}
                             </button>
                             <button class="btn btn-eliminar" onclick="serviciosEntrenadorManager.eliminarServicio(${servicio.idServicio})">
                                 <i class="bi bi-trash"></i>
@@ -236,12 +236,12 @@ class ServiciosEntrenadorManager {
         document.getElementById('servicioPrecio').value = servicio.precio;
         document.getElementById('servicioDeporte').value = servicio.deporte;
         document.getElementById('servicioNivel').value = servicio.nivel;
-        document.getElementById('servicioModalidad').value = servicio.modalidad;
+        document.getElementById('servicioCupos').value = servicio.cuposDisponibles;
         document.getElementById('servicioDuracion').value = servicio.duracion;
         document.getElementById('servicioUbicacion').value = servicio.ubicacion;
         document.getElementById('servicioDescripcion').value = servicio.descripcion;
         document.getElementById('servicioIncluye').value = servicio.incluye || '';
-        document.getElementById('servicioActivo').checked = servicio.activo;
+        document.getElementById('servicioActivo').checked = servicio.estado === "Activo";
 
         document.getElementById('servicioModalTitle').textContent = 'Editar Servicio';
         document.getElementById('servicioSubmitText').textContent = 'Guardar Cambios';

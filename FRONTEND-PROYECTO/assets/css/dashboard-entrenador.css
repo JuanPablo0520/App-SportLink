@@ -236,6 +236,63 @@
     border-top: 1px solid #dee2e6;
 }
 
+/* Reseña Item - Diseño Compacto (Dashboard) */
+.resena-item-compact {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.65rem;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+    opacity: 0;
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.resena-item-compact:hover {
+    background: #e9ecef;
+    border-left-color: var(--primary-color);
+    transform: translateX(3px);
+}
+
+.resena-item-compact:last-child {
+    margin-bottom: 0;
+}
+
+.resena-cliente-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #212529;
+    display: flex;
+    align-items: center;
+}
+
+.resena-cliente-name i {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.resena-stars {
+    color: #ffc107;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.resena-stars i {
+    margin: 0 1px;
+}
+
+/* Animación fadeInUp */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Servicio Item */
 .servicio-item {
     background: white;

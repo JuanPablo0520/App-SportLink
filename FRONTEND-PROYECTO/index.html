@@ -436,6 +436,144 @@
       </div>
     </div>
 
+    <!-- Modal de Verificación de Código Mejorado -->
+    <div class="modal fade" id="verifyCodeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <!-- Header con gradiente y botón de cerrar -->
+          <div class="modal-header border-0" style="background: linear-gradient(135deg, #2E8B57 0%, #1A3E2F 100%);">
+            <h5 class="modal-title text-white w-100 text-center">
+              <i class="bi bi-shield-check fs-1 d-block mb-2"></i>
+              Verificación de Correo
+            </h5>
+            <button type="button" class="btn-close btn-close-white" id="closeVerifyModal" aria-label="Cerrar"></button>
+          </div>
+
+          <div class="modal-body px-4 py-4">
+            <!-- Icono de correo animado -->
+            <div class="text-center mb-4">
+              <div class="verification-icon-container">
+                <i class="bi bi-envelope-paper" style="font-size: 4rem; color: #2E8B57; animation: pulse 2s infinite;"></i>
+              </div>
+            </div>
+          
+            <!-- Mensaje informativo -->
+            <div class="text-center mb-4">
+              <p class="mb-2 text-muted">Hemos enviado un código de 6 dígitos a:</p>
+              <p class="fw-bold fs-5 text-primary mb-1" id="verifyEmailDisplay">correo@ejemplo.com</p>
+              <small class="text-muted">Por favor, revisa tu bandeja de entrada y spam</small>
+            </div>
+          
+            <!-- Input de código con diseño moderno -->
+            <div class="mb-4">
+              <label for="verificationCodeInput" class="form-label text-center d-block fw-bold">
+                Código de Verificación
+              </label>
+              <div class="code-input-container position-relative">
+                <input 
+                  type="text" 
+                  id="verificationCodeInput" 
+                  class="form-control form-control-lg text-center shadow-sm" 
+                  placeholder="000000"
+                  maxlength="6" 
+                  pattern="[0-9]{6}"
+                  autocomplete="off"
+                  required
+                  style="
+                    letter-spacing: 1rem; 
+                    font-size: 2rem; 
+                    font-weight: 700;
+                    font-family: 'Courier New', monospace;
+                    border: 2px solid #dee2e6;
+                    border-radius: 12px;
+                    transition: all 0.3s ease;
+                  "
+                >
+                <div class="invalid-feedback text-center">
+                  Por favor ingresa un código válido de 6 dígitos
+                </div>
+                <!-- Indicador de loading -->
+                <div class="spinner-border spinner-border-sm text-primary position-absolute d-none" 
+                     id="codeLoadingSpinner"
+                     style="top: 50%; right: 15px; transform: translateY(-50%);">
+                </div>
+              </div>
+              <div class="text-center mt-2">
+                <small class="text-muted">
+                  <i class="bi bi-info-circle"></i> 
+                  Solo números, sin espacios
+                </small>
+              </div>
+            </div>
+          
+            <!-- Botón de verificar -->
+            <div class="d-grid gap-2 mb-3">
+              <button 
+                id="verifyCodeBtn" 
+                class="btn btn-primary btn-lg shadow"
+                style="
+                  background: linear-gradient(135deg, #2E8B57 0%, #1A3E2F 100%);
+                  border: none;
+                  border-radius: 10px;
+                  font-weight: 600;
+                  padding: 12px;
+                  transition: all 0.3s ease;
+                "
+              >
+                <span class="spinner-border spinner-border-sm d-none me-2" id="verifySpinner"></span>
+                <i class="bi bi-shield-check me-2"></i>
+                Verificar Código
+              </button>
+            </div>
+          
+            <!-- Divider -->
+            <div class="position-relative mb-3">
+              <hr style="border-top: 1px solid #dee2e6;">
+              <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted" style="font-size: 0.85rem;">
+                ¿Problemas?
+              </span>
+            </div>
+          
+            <!-- Opciones adicionales -->
+            <div class="text-center">
+              <p class="text-muted mb-2" style="font-size: 0.9rem;">¿No recibiste el código?</p>
+              <button 
+                type="button" 
+                class="btn btn-outline-primary btn-sm" 
+                id="resendCodeBtn"
+                style="border-radius: 20px; padding: 8px 20px;"
+              >
+                <i class="bi bi-arrow-repeat me-1"></i>
+                Reenviar código
+              </button>
+              <div class="mt-2">
+                <small class="text-muted" id="resendCountdown"></small>
+              </div>
+            </div>
+          
+            <!-- Alert de información -->
+            <div class="alert alert-info d-flex align-items-center mt-4 mb-0" role="alert" style="border-radius: 10px; border-left: 4px solid #0dcaf0;">
+              <i class="bi bi-clock-history fs-5 me-3"></i>
+              <div>
+                <small>
+                  <strong>Importante:</strong> El código expira en <strong>10 minutos</strong>.
+                  Si no lo encuentras, revisa tu carpeta de spam o correo no deseado.
+                </small>
+              </div>
+            </div>
+          </div>
+        
+          <!-- Footer opcional -->
+          <div class="modal-footer border-0 bg-light" style="border-radius: 0 0 8px 8px;">
+            <small class="text-muted w-100 text-center">
+              <i class="bi bi-lock-fill me-1"></i>
+              Tu información está protegida y segura
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal de Términos y Condiciones -->
     <div class="modal fade" id="termsModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-scrollable">

@@ -403,8 +403,22 @@ class SesionesEntrenadorManager {
             const fechaHora = `${confirmDate}T${confirmTime}`;
 
             // Obtener sesión actual
-            const session = this.allSessions.find(s => s.id === sessionId);
-            if (!session) throw new Error('Sesión no encontrada');
+            let session = this.selectedSession;
+
+            if (!session) {
+                console.error("selectedSession VACÍO. allSessions:", this.allSessions);
+                throw new Error("No hay sesión activa seleccionada");
+            }
+
+            // Validar que coincida el ID
+            if (String(session.id) !== String(sessionId) && String(session.idSesion) !== String(sessionId)) {
+                console.warn("IDs no coinciden entre modal y selectedSession. Rebuscando...");
+                session = this.allSessions.find(s => String(s.id) === String(sessionId) || String(s.idSesion) === String(sessionId));
+            }
+
+            if (!session) {
+                throw new Error("Sesión no encontrada tras fallback");
+            }
 
             // Preparar datos para actualizar
             const updateData = {
@@ -423,8 +437,8 @@ class SesionesEntrenadorManager {
             };
 
             // Actualizar sesión
-            const response = await ApiClient.put('/Sesion/actualizar', updateData);
             console.log("Data enviada: ", updateData);
+            const response = await ApiClient.put('/Sesion/actualizar', updateData);
             if (response) {
                 UIHelpers.showToast('Sesión confirmada exitosamente', 'success');
                 
@@ -469,8 +483,22 @@ class SesionesEntrenadorManager {
             UIHelpers.showButtonSpinner(submitBtn, true);
 
             // Obtener sesión actual
-            const session = this.allSessions.find(s => s.id === sessionId);
-            if (!session) throw new Error('Sesión no encontrada');
+            let session = this.selectedSession;
+
+            if (!session) {
+                console.error("selectedSession VACÍO. allSessions:", this.allSessions);
+                throw new Error("No hay sesión activa seleccionada");
+            }
+
+            // Validar que coincida el ID
+            if (String(session.id) !== String(sessionId) && String(session.idSesion) !== String(sessionId)) {
+                console.warn("IDs no coinciden entre modal y selectedSession. Rebuscando...");
+                session = this.allSessions.find(s => String(s.id) === String(sessionId) || String(s.idSesion) === String(sessionId));
+            }
+
+            if (!session) {
+                throw new Error("Sesión no encontrada tras fallback");
+            }
 
             // Preparar datos para actualizar
             const updateData = {

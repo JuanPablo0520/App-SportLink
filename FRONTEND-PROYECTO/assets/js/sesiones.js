@@ -19,6 +19,14 @@ class SesionesPageManager {
             return;
         }
 
+        this.currentUser = AuthManager.getUser();
+    
+        // Redirigir a perfil de entrenador si corresponde
+        if (this.currentUser.tipoUsuario === 'entrenador') {
+            window.location.href = 'sesiones-entrenador.html';
+            return;
+        }
+
         this.initializeEventListeners();
         this.loadSessions();
     }
