@@ -518,6 +518,7 @@ class SesionesEntrenadorManager {
 
             // Actualizar sesión
             const response = await ApiClient.put('/Sesion/actualizar', updateData);
+            
 
             if (response) {
                 UIHelpers.showToast('Sesión finalizada exitosamente', 'success');

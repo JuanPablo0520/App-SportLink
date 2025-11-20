@@ -86,10 +86,7 @@ class PerfilEntrenadorManager {
     // ==================== CARGA DE DATOS ====================
     async loadTrainerProfile() {
         try {
-            // TODO: Reemplazar con llamada real al API
             const trainer = await ApiClient.get(`/Entrenador/obtener/${this.currentTrainer.idEntrenador}`);
-            
-            //const trainer = await this.simulateGetTrainerProfile();
             
             this.populateTrainerData(trainer);
             this.originalFormData = this.getFormData();
@@ -128,34 +125,31 @@ class PerfilEntrenadorManager {
         this.renderEspecialidades();
     }
 
-    async loadEstadisticas() {
-        try {
-            // TODO: Reemplazar con llamada real al API
-            // const stats = await ApiClient.get(`/Entrenador/estadisticas/${this.currentTrainer.idEntrenador}`);
-            
-            const stats = await this.simulateGetEstadisticas();
-            
-            document.getElementById('statServicios').textContent = stats.serviciosActivos || 0;
-            document.getElementById('statSesiones').textContent = stats.sesionesTotales || 0;
-            document.getElementById('statCalificacion').textContent = (stats.calificacionPromedio || 0).toFixed(1);
-            document.getElementById('statResenias').textContent = stats.totalResenias || 0;
-
-        } catch (error) {
-            console.error('Error loading estadísticas:', error);
-        }
-    }
+    //async loadEstadisticas() {
+    //    try {
+    //        // TODO: Reemplazar con llamada real al API cuando exista
+    //        const stats = await this.simulateGetEstadisticas();
+    //        
+    //        document.getElementById('statServicios').textContent = stats.serviciosActivos || 0;
+    //        document.getElementById('statSesiones').textContent = stats.sesionesTotales || 0;
+    //        document.getElementById('statCalificacion').textContent = (stats.calificacionPromedio || 0).toFixed(1);
+    //        document.getElementById('statResenias').textContent = stats.totalResenias || 0;
+//
+    //    } catch (error) {
+    //        console.error('Error loading estadísticas:', error);
+    //    }
+    //}
 
     async loadCertificaciones() {
         const container = document.getElementById('certificacionesContainer');
         
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const certs = await ApiClient.get(`/Entrenador/${this.currentTrainer.idEntrenador}/certificaciones`);
-            
-            const certs = await this.simulateGetCertificaciones();
+            // Llamada real al API
+            const certs = await ApiClient.get(`/Certificado/obtenerPkEntrenador/${this.currentTrainer.idEntrenador}`);
             
             this.certificaciones = certs;
             this.renderCertificaciones(certs);
+            console.log("Certificaciones encontradas: ", certs)
 
         } catch (error) {
             console.error('Error loading certificaciones:', error);
@@ -167,20 +161,32 @@ class PerfilEntrenadorManager {
         const container = document.getElementById('reseniasContainer');
         
         try {
-            // TODO: Reemplazar con llamada real al API
-            // const resenias = await ApiClient.get(`/Resenia/entrenador/${this.currentTrainer.idEntrenador}`);
+            // Llamada real al API
+            const resenias = await ApiClient.get(`/Resenia/obtener/idEntrenador/${this.currentTrainer.idEntrenador}`);
             
-            const resenias = await this.simulateGetResenias();
-            
-            this.resenias = resenias;
-            this.renderResenias(resenias);
+            if (!resenias || resenias.length === 0) {
+                this.resenias = [];
+                this.renderResenias([]);
+                return;
+            }
 
-            // Actualizar promedio
-            const promedio = resenias.length > 0 
-                ? resenias.reduce((sum, r) => sum + r.calificacion, 0) / resenias.length 
+            // Transformar las reseñas al formato esperado
+            this.resenias = resenias.map(r => ({
+                idResenia: r.idResenia,
+                calificacion: r.calificacion,
+                comentario: r.comentario,
+                clienteNombre: `${r.cliente.nombres} ${r.cliente.apellidos}`,
+                clienteFoto: r.cliente.fotoPerfil || null
+            }));
+
+            this.renderResenias(this.resenias);
+
+            // Actualizar promedio y total
+            const promedio = this.resenias.length > 0 
+                ? this.resenias.reduce((sum, r) => sum + r.calificacion, 0) / this.resenias.length 
                 : 0;
             document.getElementById('promedioResenias').textContent = promedio.toFixed(1);
-            document.getElementById('totalResenias').textContent = resenias.length;
+            document.getElementById('totalResenias').textContent = this.resenias.length;
 
         } catch (error) {
             console.error('Error loading reseñas:', error);
@@ -210,7 +216,6 @@ class PerfilEntrenadorManager {
             const div = document.createElement('div');
             div.className = 'input-group mb-2';
         
-            // Construir las opciones dinámicamente
             let opciones = `<option value="">Seleccionar deporte</option>`;
             deportes.forEach(dep => {
                 opciones += `
@@ -241,7 +246,6 @@ class PerfilEntrenadorManager {
         });
     }
 
-
     addEspecialidadField() {
         this.especialidades.push('');
         this.renderEspecialidades();
@@ -253,12 +257,50 @@ class PerfilEntrenadorManager {
     }
 
     // ==================== CERTIFICACIONES ====================
-    openCertificacionModal() {
+    openCertificacionModal(certToEdit = null) {
         const modalElement = document.getElementById('certificacionModal');
         if (!this.certificacionModal) {
             this.certificacionModal = new bootstrap.Modal(modalElement);
         }
-        document.getElementById('certificacionForm').reset();
+        
+        const form = document.getElementById('certificacionForm');
+        const modalTitle = document.getElementById('certificacionModalTitle');
+        const archivoInput = document.getElementById('certArchivo');
+        const archivoLabel = document.getElementById('certArchivoLabel');
+        
+        form.reset();
+        
+        if (certToEdit) {
+            // Modo edición
+            modalTitle.textContent = 'Editar Certificación';
+            document.getElementById('certNombre').value = certToEdit.nombre;
+            document.getElementById('certInstitucion').value = certToEdit.entidad;
+            
+            // Formatear fecha para input date (YYYY-MM-DD)
+            if (certToEdit.fecha) {
+                try {
+                    const fecha = new Date(certToEdit.fecha);
+                    const fechaStr = fecha.toISOString().split('T')[0];
+                    document.getElementById('certFecha').value = fechaStr;
+                } catch (e) {
+                    console.error('Error parsing date:', e);
+                }
+            }
+            
+            // Guardar ID para actualización
+            form.dataset.editId = certToEdit.pkCertificado;
+            
+            // Hacer el archivo opcional en edición
+            archivoInput.removeAttribute('required');
+            archivoLabel.innerHTML = 'Nuevo documento (PDF) <small class="text-muted">(opcional - dejar vacío para mantener el actual)</small>';
+        } else {
+            // Modo creación
+            modalTitle.textContent = 'Agregar Certificación';
+            delete form.dataset.editId;
+            archivoInput.setAttribute('required', 'required');
+            archivoLabel.innerHTML = 'Documento (PDF) *';
+        }
+        
         this.certificacionModal.show();
     }
 
@@ -266,31 +308,103 @@ class PerfilEntrenadorManager {
         e.preventDefault();
         
         const submitBtn = e.target.querySelector('button[type="submit"]');
+        const form = e.target;
+        const isEditing = !!form.dataset.editId;
         
         try {
+            const archivoInput = document.getElementById('certArchivo');
+            
+            // Validar archivo solo si es creación o si se seleccionó uno nuevo
+            if (!isEditing && !archivoInput.files[0]) {
+                UIHelpers.showToast('Debes seleccionar un archivo PDF', 'warning');
+                return;
+            }
+
+            // Validar tamaño si hay archivo
+            if (archivoInput.files[0] && archivoInput.files[0].size > 5 * 1024 * 1024) {
+                UIHelpers.showToast('El archivo no debe superar 5MB', 'warning');
+                return;
+            }
+
             UIHelpers.showButtonSpinner(submitBtn, true);
 
-            const formData = new FormData();
-            formData.append('idEntrenador', this.currentTrainer.idEntrenador);
-            formData.append('nombre', document.getElementById('certNombre').value.trim());
-            formData.append('institucion', document.getElementById('certInstitucion').value.trim());
-            formData.append('fecha', document.getElementById('certFecha').value);
-            formData.append('archivo', document.getElementById('certArchivo').files[0]);
-
-            // TODO: Reemplazar con llamada real al API
-            // await ApiClient.post('/Entrenador/certificacion/agregar', formData);
-            
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            UIHelpers.showToast('Certificación agregada exitosamente', 'success');
-            this.certificacionModal.hide();
-            await this.loadCertificaciones();
+            if (isEditing) {
+                // Modo actualización
+                await this.actualizarCertificacion(form);
+            } else {
+                // Modo creación
+                await this.crearCertificacion(form);
+            }
 
         } catch (error) {
-            console.error('Error adding certificacion:', error);
-            UIHelpers.showToast('Error al agregar la certificación', 'danger');
+            console.error('Error processing certificacion:', error);
+            UIHelpers.showToast(error.message || 'Error al procesar la certificación', 'danger');
         } finally {
             UIHelpers.showButtonSpinner(submitBtn, false);
+        }
+    }
+
+    async crearCertificacion(form) {
+        const formData = new FormData();
+        formData.append('nombre', document.getElementById('certNombre').value.trim());
+        formData.append('entidad', document.getElementById('certInstitucion').value.trim());
+        
+        // Convertir fecha a formato LocalDateTime
+        const fechaInput = document.getElementById('certFecha').value;
+        const fechaFormatted = fechaInput ? `${fechaInput}T00:00:00` : new Date().toISOString().slice(0, 19);
+        formData.append('fecha', fechaFormatted);
+        
+        formData.append('archivo', document.getElementById('certArchivo').files[0]);
+        formData.append('idEntrenador', this.currentTrainer.idEntrenador);
+
+        const response = await fetch(`${CONFIG.API_BASE_URL}/Certificado/enviarCertificacion`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        await response.json();
+
+        UIHelpers.showToast('Certificación agregada exitosamente', 'success');
+        this.certificacionModal.hide();
+        await this.loadCertificaciones();
+    }
+
+    async actualizarCertificacion(form) {
+        const pkCertificado = parseInt(form.dataset.editId);
+        const archivoInput = document.getElementById('certArchivo');
+        const tieneNuevoArchivo = archivoInput.files[0];
+
+        // Si hay nuevo archivo, necesitamos crear una nueva certificación y eliminar la antigua
+        // porque el endpoint de actualización solo acepta JSON, no FormData
+        if (tieneNuevoArchivo) {
+            // Eliminar la antigua
+            await ApiClient.delete(`/Certificado/eliminar/${pkCertificado}`);
+            
+            // Crear la nueva con el archivo
+            await this.crearCertificacion(form);
+        } else {
+            // Actualizar solo los datos sin archivo
+            const fechaInput = document.getElementById('certFecha').value;
+            const fechaFormatted = fechaInput ? `${fechaInput}T00:00:00` : new Date().toISOString().slice(0, 19);
+
+            const certificadoData = {
+                pkCertificado: pkCertificado,
+                nombre: document.getElementById('certNombre').value.trim(),
+                entidad: document.getElementById('certInstitucion').value.trim(),
+                fecha: fechaFormatted,
+                rutaArchivo: null, // El backend mantendrá el existente
+                fkEntrenador: this.currentTrainer.idEntrenador
+            };
+
+            await ApiClient.put('/Certificado/actualizar', certificadoData);
+
+            UIHelpers.showToast('Certificación actualizada exitosamente', 'success');
+            this.certificacionModal.hide();
+            await this.loadCertificaciones();
         }
     }
 
@@ -306,32 +420,81 @@ class PerfilEntrenadorManager {
             return;
         }
 
-        let html = '';
+        container.innerHTML = ''; // Limpiar contenedor
         
         certs.forEach(cert => {
-            html += `
-                <div class="certification-item fade-in">
-                    <div class="certification-icon">
-                        <i class="bi bi-award-fill"></i>
-                    </div>
-                    <div class="certification-info flex-grow-1">
-                        <h6>${cert.nombre}</h6>
-                        <p><strong>Institución:</strong> ${cert.institucion}</p>
-                        ${cert.fecha ? `<p><small class="text-muted">Emitido: ${UIHelpers.formatDate(cert.fecha)}</small></p>` : ''}
-                    </div>
-                    <div>
-                        <a href="${cert.url}" target="_blank" class="btn btn-sm btn-outline-primary me-2">
+            // Formatear fecha
+            let fechaTexto = 'No especificada';
+            if (cert.fechaEmision) {
+                try {
+                    const fecha = new Date(cert.fechaEmision);
+                    fechaTexto = UIHelpers.formatDate(fecha);
+                } catch (e) {
+                    fechaTexto = cert.fechaEmision;
+                }
+            }
+
+            const certDiv = document.createElement('div');
+            certDiv.className = 'certification-item fade-in';
+            
+            certDiv.innerHTML = `
+                <div class="certification-icon">
+                    <i class="bi bi-award-fill"></i>
+                </div>
+                <div class="certification-info flex-grow-1">
+                    <h6>${cert.nombre}</h6>
+                    <p><strong>Institución:</strong> ${cert.entidad}</p>
+                    <p><small class="text-muted">Emitido: ${fechaTexto}</small></p>
+                </div>
+                <div class="certification-actions d-flex flex-wrap gap-2">
+                    ${cert.archivo ? `
+                        <a href="${cert.archivo}" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver PDF">
                             <i class="bi bi-file-pdf"></i> Ver
                         </a>
-                        <button class="btn btn-sm btn-outline-danger" onclick="perfilEntrenadorManager.eliminarCertificacion('${cert.id}')">
-                            <i class="bi bi-trash"></i>
+                        <a href="${cert.archivo}" download class="btn btn-sm btn-outline-success" title="Descargar PDF">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    ` : `
+                        <button class="btn btn-sm btn-outline-secondary" disabled title="Sin archivo">
+                            <i class="bi bi-file-pdf"></i> Sin archivo
                         </button>
-                    </div>
+                    `}
+                    <button class="btn btn-sm btn-outline-warning btn-editar-cert" data-cert-id="${cert.idCertificado}" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger btn-eliminar-cert" data-cert-id="${cert.idCertificado}" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
             `;
+            
+            container.appendChild(certDiv);
         });
         
-        container.innerHTML = html;
+        // Agregar event listeners a los botones
+        document.querySelectorAll('.btn-editar-cert').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const certId = parseInt(e.currentTarget.dataset.certId);
+                this.editarCertificacion(certId);
+            });
+        });
+        
+        document.querySelectorAll('.btn-eliminar-cert').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const certId = parseInt(e.currentTarget.dataset.certId);
+                this.eliminarCertificacion(certId);
+            });
+        });
+    }
+
+    editarCertificacion(certId) {
+        const cert = this.certificaciones.find(c => c.idCertificado === certId);
+        if (cert) {
+            this.openCertificacionModal(cert);
+        } else {
+            console.error('Certificación no encontrada:', certId);
+            UIHelpers.showToast('Error al cargar la certificación', 'danger');
+        }
     }
 
     async eliminarCertificacion(certId) {
@@ -340,10 +503,8 @@ class PerfilEntrenadorManager {
             '¿Estás seguro que deseas eliminar esta certificación?',
             async () => {
                 try {
-                    // TODO: Reemplazar con llamada real al API
-                    // await ApiClient.delete(`/Entrenador/certificacion/${certId}`);
-                    
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Llamada al endpoint de eliminación
+                    await ApiClient.delete(`/Certificado/eliminar/${certId}`);
                     
                     UIHelpers.showToast('Certificación eliminada', 'success');
                     await this.loadCertificaciones();
@@ -373,26 +534,28 @@ class PerfilEntrenadorManager {
         let html = '';
         
         resenias.forEach(resena => {
+            // Avatar del cliente
+            const avatarHtml = resena.clienteFoto 
+                ? `<img src="${resena.clienteFoto}" alt="${resena.clienteNombre}" class="resena-avatar">`
+                : `<div class="resena-avatar-placeholder">
+                     <i class="bi bi-person-circle"></i>
+                   </div>`;
+
             html += `
                 <div class="resena-item fade-in">
                     <div class="resena-header">
-                        <div>
-                            <div class="resena-cliente">${resena.clienteNombre}</div>
-                            <div class="resena-estrellas">
-                                ${this.renderEstrellas(resena.calificacion)}
+                        <div class="d-flex align-items-center">
+                            ${avatarHtml}
+                            <div class="ms-3">
+                                <div class="resena-cliente">${resena.clienteNombre}</div>
+                                <div class="resena-estrellas">
+                                    ${this.renderEstrellas(resena.calificacion)}
+                                    <span class="ms-2 text-muted">(${resena.calificacion.toFixed(1)})</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="text-end">
-                            <div class="resena-fecha">${UIHelpers.formatDate(resena.fecha)}</div>
                         </div>
                     </div>
                     <p class="resena-texto">"${resena.comentario}"</p>
-                    ${resena.respuesta ? `
-                        <div class="alert alert-light mt-2 mb-0">
-                            <strong>Tu respuesta:</strong><br>
-                            ${resena.respuesta}
-                        </div>
-                    ` : ''}
                 </div>
             `;
         });
@@ -445,11 +608,7 @@ class PerfilEntrenadorManager {
                 servicios: this.currentTrainer.servicios || []
             };
 
-            // TODO: Reemplazar con llamada real al API
             const response = await ApiClient.put('/Entrenador/actualizar', formData);
-            
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            //const response = formData;
 
             if (response) {
                 this.originalFormData = this.getFormData();
@@ -498,13 +657,7 @@ class PerfilEntrenadorManager {
 
             UIHelpers.showButtonSpinner(submitBtn, true);
 
-            // TODO: Reemplazar con llamada real al API
-            // await ApiClient.put('/Entrenador/cambiar-password', { 
-            //     idEntrenador: this.currentTrainer.idEntrenador,
-            //     passwordActual: currentPassword,
-            //     passwordNueva: newPassword 
-            // });
-            
+            // TODO: Implementar cambio de contraseña cuando esté disponible el endpoint
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             UIHelpers.showToast('Contraseña cambiada exitosamente', 'success');
@@ -578,9 +731,7 @@ class PerfilEntrenadorManager {
             formData.append('idEntrenador', this.currentTrainer.idEntrenador);
             formData.append('fotoPerfil', fileInput.files[0]);
 
-            // TODO: Reemplazar con llamada real al API
-            // const response = await ApiClient.post('/Entrenador/actualizar-foto', formData);
-            
+            // TODO: Implementar endpoint para actualizar foto cuando esté disponible
             await new Promise(resolve => setTimeout(resolve, 1000));
             const response = { fotoUrl: URL.createObjectURL(fileInput.files[0]) };
 
@@ -628,27 +779,6 @@ class PerfilEntrenadorManager {
     }
 
     // ==================== SIMULACIONES (TEMPORAL) ====================
-    async simulateGetTrainerProfile() {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        return {
-            idEntrenador: this.currentTrainer.idEntrenador,
-            nombres: this.currentTrainer.nombres || 'Carlos',
-            apellidos: this.currentTrainer.apellidos || 'Martínez',
-            correo: this.currentTrainer.correo || 'carlos@example.com',
-            contrasenia: this.currentTrainer.contrasenia,
-            especialidad: this.currentTrainer.especialidad || ['Fútbol', 'Entrenamiento funcional'],
-            certificaciones: this.currentTrainer.certificaciones || [],
-            fotoPerfil: this.currentTrainer.fotoPerfil || null,
-            telefono: '3001234567',
-            biografia: 'Entrenador profesional con más de 10 años de experiencia en formación deportiva. Especializado en desarrollo de habilidades técnicas y tácticas.',
-            fechaRegistro: '2023-03-15',
-            resenias: this.currentTrainer.resenias || [],
-            sesiones: this.currentTrainer.sesiones || [],
-            servicios: this.currentTrainer.servicios || []
-        };
-    }
-
     async simulateGetEstadisticas() {
         await new Promise(resolve => setTimeout(resolve, 600));
         
@@ -658,58 +788,6 @@ class PerfilEntrenadorManager {
             calificacionPromedio: 4.8,
             totalResenias: 15
         };
-    }
-
-    async simulateGetCertificaciones() {
-        await new Promise(resolve => setTimeout(resolve, 700));
-        
-        return [
-            {
-                id: 'cert1',
-                nombre: 'Certificación UEFA Pro',
-                institucion: 'UEFA',
-                fecha: '2022-06-15',
-                url: '#'
-            },
-            {
-                id: 'cert2',
-                nombre: 'Entrenador Personal Certificado',
-                institucion: 'NSCA',
-                fecha: '2021-03-20',
-                url: '#'
-            }
-        ];
-    }
-
-    async simulateGetResenias() {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        return [
-            {
-                id: 'res1',
-                clienteNombre: 'Juan Pérez',
-                calificacion: 5,
-                comentario: 'Excelente entrenador, muy profesional y dedicado. He mejorado muchísimo gracias a sus entrenamientos.',
-                fecha: '2025-01-10',
-                respuesta: 'Muchas gracias Juan, es un placer trabajar contigo. ¡Sigamos mejorando!'
-            },
-            {
-                id: 'res2',
-                clienteNombre: 'María García',
-                calificacion: 5,
-                comentario: 'Las clases son muy dinámicas y motivadoras. Recomendado 100%.',
-                fecha: '2025-01-05',
-                respuesta: null
-            },
-            {
-                id: 'res3',
-                clienteNombre: 'Pedro Rodríguez',
-                calificacion: 4,
-                comentario: 'Muy buen entrenador, las sesiones son exigentes pero efectivas.',
-                fecha: '2024-12-20',
-                respuesta: 'Gracias Pedro por tu comentario. Me alegra que estés viendo resultados.'
-            }
-        ];
     }
 }
 
