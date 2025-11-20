@@ -620,7 +620,7 @@ class IndexPageManager {
                 peso: null,
                 telefono: document.getElementById('clientPhone').value.trim(),
                 ubicacion: document.getElementById('clientLocation').value.trim(),
-                fechaRegistro: null,
+                fechaRegistro: new Date().toISOString(),
                 sesiones: [],
                 resenias: []
             };
@@ -731,7 +731,7 @@ class IndexPageManager {
                 especialidad: [document.getElementById('trainerSpecialty').value.trim()],
                 certificaciones: [],
                 fotoPerfil: null,
-                fechaRegistro: null,
+                fechaRegistro: new Date().toISOString(),
                 resenias: [],
                 sesiones: [],
                 servicios: []

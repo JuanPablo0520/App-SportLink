@@ -192,34 +192,47 @@ class PerfilEntrenadorManager {
     renderEspecialidades() {
         const container = document.getElementById('especialidadesContainer');
         container.innerHTML = '';
-
+    
+        const deportes = [
+            "Fútbol",
+            "Tenis",
+            "Natación",
+            "Boxeo",
+            "Crossfit",
+            "Yoga",
+            "Entrenamiento funcional",
+            "Baloncesto",
+            "Voleibol",
+            "Artes marciales"
+        ];
+    
         this.especialidades.forEach((esp, index) => {
             const div = document.createElement('div');
             div.className = 'input-group mb-2';
+        
+            // Construir las opciones dinámicamente
+            let opciones = `<option value="">Seleccionar deporte</option>`;
+            deportes.forEach(dep => {
+                opciones += `
+                    <option value="${dep}" ${esp === dep ? 'selected' : ''}>
+                        ${dep}
+                    </option>
+                `;
+            });
+        
             div.innerHTML = `
                 <select class="form-select especialidad-select" data-index="${index}" required>
-                    <option value="">Seleccionar deporte</option>
-                    <option value="Fútbol" ${esp === 'Fútbol' ? 'selected' : ''}>Fútbol</option>
-                    <option value="Tenis" ${esp === 'Tenis' ? 'selected' : ''}>Tenis</option>
-                    <option value="Natación" ${esp === 'Natación' ? 'selected' : ''}>Natación</option>
-                    <option value="Boxeo" ${esp === 'Boxeo' ? 'selected' : ''}>Boxeo</option>
-                    <option value="CrossFit" ${esp === 'CrossFit' ? 'selected' : ''}>CrossFit</option>
-                    <option value="Entrenamiento funcional" ${esp === 'Entrenamiento funcional' ? 'selected' : ''}>Entrenamiento funcional</option>
-                    <option value="Baloncesto" ${esp === 'Baloncesto' ? 'selected' : ''}>Baloncesto</option>
-                    <option value="Voleibol" ${esp === 'Voleibol' ? 'selected' : ''}>Voleibol</option>
-                    <option value="Artes marciales" ${esp === 'Artes marciales' ? 'selected' : ''}>Artes marciales</option>
-                    <option value="Yoga" ${esp === 'Yoga' ? 'selected' : ''}>Yoga</option>
-                    <option value="Pilates" ${esp === 'Pilates' ? 'selected' : ''}>Pilates</option>
-                    <option value="Otro" ${esp === 'Otro' ? 'selected' : ''}>Otro</option>
+                    ${opciones}
                 </select>
                 <button class="btn btn-outline-danger" type="button" onclick="perfilEntrenadorManager.removeEspecialidad(${index})">
                     <i class="bi bi-trash"></i>
                 </button>
             `;
+        
             container.appendChild(div);
         });
-
-        // Event listeners para actualizar array
+    
+        // Event listener para actualizar array
         document.querySelectorAll('.especialidad-select').forEach(select => {
             select.addEventListener('change', (e) => {
                 const index = parseInt(e.target.dataset.index);
@@ -227,6 +240,7 @@ class PerfilEntrenadorManager {
             });
         });
     }
+
 
     addEspecialidadField() {
         this.especialidades.push('');
