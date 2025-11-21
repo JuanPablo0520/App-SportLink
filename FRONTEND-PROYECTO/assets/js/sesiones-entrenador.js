@@ -1,4 +1,4 @@
-/* assets/js/sesiones-entrenador.js - Lógica para sesiones del entrenador */
+/* assets/js/sesiones-entrenador.js - Lógica para sesiones del entrenador con notificaciones */
 
 class SesionesEntrenadorManager {
     constructor() {
@@ -355,6 +355,48 @@ class SesionesEntrenadorManager {
         return texts[status] || 'Desconocido';
     }
 
+    // ==================== UTILIDADES DE FORMATO ====================
+    formatearFechaLegible(fecha) {
+        const opciones = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        return new Date(fecha).toLocaleDateString('es-CO', opciones);
+    }
+
+    formatearHoraLegible(hora) {
+        // hora puede venir como "14:00:00" o "14:00"
+        const [hh, mm] = hora.split(':');
+        const horaNum = parseInt(hh);
+        const periodo = horaNum >= 12 ? 'PM' : 'AM';
+        const hora12 = horaNum > 12 ? horaNum - 12 : (horaNum === 0 ? 12 : horaNum);
+        return `${hora12}:${mm} ${periodo}`;
+    }
+
+    // ==================== ENVÍO DE CORREOS ====================
+    async enviarCorreoNotificacion(idCliente, asunto, mensaje) {
+        try {
+            // Codificar parámetros para URL
+            const asuntoCodificado = encodeURIComponent(asunto);
+            const mensajeCodificado = encodeURIComponent(mensaje);
+            
+            const response = await ApiClient.get(
+                `/Cliente/enviarCorreo/${idCliente}/${asuntoCodificado}/${mensajeCodificado}`
+            );
+            
+            if (response) {
+                console.log('Correo enviado exitosamente');
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error enviando correo:', error);
+            return false;
+        }
+    }
+
     // ==================== CONFIRMAR SESIÓN ====================
     openConfirmarModal(sessionId) {
         console.log('Abriendo modal para sesión:', sessionId);
@@ -439,8 +481,39 @@ class SesionesEntrenadorManager {
             // Actualizar sesión
             console.log("Data enviada: ", updateData);
             const response = await ApiClient.put('/Sesion/actualizar', updateData);
+            
             if (response) {
-                UIHelpers.showToast('Sesión confirmada exitosamente', 'success');
+                // ==================== ENVIAR CORREO DE CONFIRMACIÓN ====================
+                const fechaLegible = this.formatearFechaLegible(confirmDate);
+                const horaLegible = this.formatearHoraLegible(confirmTime);
+                
+                const asunto = '¡Tu sesión ha sido confirmada! - SportLink Colombia';
+                
+                const mensaje = `Hola ${session.clientName},
+
+¡Excelentes noticias! Tu sesión de "${session.title}", con el entrenador ${this.currentTrainer.nombres} ${this.currentTrainer.apellidos} ha sido confirmada.
+
+📅 Fecha: ${fechaLegible}
+🕐 Hora: ${horaLegible}
+📍 Ubicación: ${session.location}
+💰 Precio: ${UIHelpers.formatPrice(session.price)}
+
+${notes ? `📝 Nota del entrenador: ${notes}` : ''}
+
+¡Prepárate para tu sesión! Recuerda llegar con ropa cómoda y con la mejor actitud.
+
+Si tienes alguna pregunta, puedes contactar a tu entrenador a través del chat de la plataforma.
+
+¡Nos vemos pronto!
+
+---
+    SportLink Colombia
+    Tu plataforma de entrenamiento deportivo`;
+
+                // Enviar correo de notificación
+                await this.enviarCorreoNotificacion(session.clienteId, asunto, mensaje);
+                
+                UIHelpers.showToast('Sesión confirmada y cliente notificado por correo', 'success');
                 
                 // Cerrar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('confirmarSesionModal'));
@@ -519,9 +592,36 @@ class SesionesEntrenadorManager {
             // Actualizar sesión
             const response = await ApiClient.put('/Sesion/actualizar', updateData);
             
-
             if (response) {
-                UIHelpers.showToast('Sesión finalizada exitosamente', 'success');
+                // ==================== ENVIAR CORREO DE FINALIZACIÓN ====================
+                const asunto = '¡Sesión completada! Déjanos tu opinión - SportLink Colombia';
+                
+                const mensaje = `Hola ${session.clientName},
+
+¡Tu sesión de "${session.title}", con el entrenador ${this.currentTrainer.nombres} ${this.currentTrainer.apellidos} ha sido completada exitosamente!
+
+🏆 Detalles de la sesión:
+📅 Fecha: ${this.formatearFechaLegible(session.date)}
+🕐 Hora: ${session.time}
+📍 Ubicación: ${session.location}
+
+${notes ? `📝 Observaciones del entrenador: ${notes}` : ''}
+
+⭐ ¿Qué te pareció la sesión?
+Nos encantaría conocer tu opinión sobre la experiencia con tu entrenador. Tu feedback es muy importante para nosotros y ayuda a otros usuarios a encontrar los mejores entrenadores.
+
+👉 Ingresa a tu perfil en SportLink Colombia y califica esta sesión.
+
+¡Esperamos verte pronto en tu próxima sesión!
+
+---
+    SportLink Colombia
+    Tu plataforma de entrenamiento deportivo`;
+
+                // Enviar correo de notificación
+                await this.enviarCorreoNotificacion(session.clienteId, asunto, mensaje);
+                
+                UIHelpers.showToast('Sesión finalizada y cliente notificado por correo', 'success');
                 
                 // Cerrar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('finalizarSesionModal'));
