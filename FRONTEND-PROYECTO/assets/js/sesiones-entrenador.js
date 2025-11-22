@@ -111,8 +111,27 @@ class SesionesEntrenadorManager {
     }
 
     mapSesionToView(sesion) {
-        const fechaHora = new Date(sesion.fechaHora);
+        // Helper: valida si una fecha es parseable y no es epoch por null
+        const parseFechaHora = (fh) => {
+            if (!fh && fh !== 0) return null; // null, undefined, ''
+            const d = new Date(fh);
+            if (isNaN(d.getTime())) return null;
+            return d;
+        };
 
+        const fechaHoraObj = parseFechaHora(sesion.fechaHora);
+
+        const dateIso = fechaHoraObj ? fechaHoraObj.toISOString().split('T')[0] : null;
+        const dateTimeRaw = fechaHoraObj ? sesion.fechaHora : null;
+        const timeLocal = fechaHoraObj
+            ? fechaHoraObj.toLocaleTimeString('es-CO', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+              })
+            : null;
+        
+        console.log("Fecha validada: ", dateTimeRaw)
         return {
             id: sesion.idSesion,
             idSesion: sesion.idSesion,
@@ -123,17 +142,14 @@ class SesionesEntrenadorManager {
             clientEmail: sesion.cliente?.correo || '',
             clientPhone: sesion.cliente?.telefono || '',
             location: sesion.servicio?.ubicacion || 'Ubicación no especificada',
-            date: fechaHora.toISOString().split('T')[0],
-            dateTime: sesion.fechaHora,
-            time: fechaHora.toLocaleTimeString('es-CO', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }),
+            // Si no hay fecha válida, dejamos null y la vista mostrará "Pendiente por confirmar"
+            date: dateIso,
+            dateTime: dateTimeRaw,
+            time: timeLocal,
             price: sesion.servicio?.precio || 0,
             sport: sesion.servicio?.deporte || '',
             duration: sesion.servicio?.duracion || 60,
-            status: sesion.estado.toLowerCase(),
+            status: (sesion.estado || '').toString().toLowerCase(),
             description: sesion.servicio?.descripcion || '',
             servicioId: sesion.servicio?.idServicio,
             clienteId: sesion.cliente?.idCliente
@@ -233,7 +249,45 @@ class SesionesEntrenadorManager {
         const isPending = session.status === 'pendiente';
         const isConfirmed = session.status === 'confirmada';
         const isCompleted = session.status === 'finalizada';
-
+    
+        // Helpers locales para mostrar fecha/hora seguras
+        const isValidDateString = (d) => {
+            if (!d && d !== 0) return false; // null, undefined, ''
+            const parsed = new Date(d);
+            return !isNaN(parsed.getTime());
+        };
+    
+        const displayDate = (() => {
+            // Si ya tienes campo 'date' que viene tipo 'YYYY-MM-DD', o dateTime ISO
+            if (isValidDateString(session.date)) {
+                return UIHelpers.formatDate(session.date);
+            }
+            if (isValidDateString(session.dateTime)) {
+                // si formatDate acepta ISO, úsalo; si no, formatea manualmente
+                return UIHelpers.formatDate(session.dateTime);
+            }
+            return 'Pendiente por confirmar';
+        })();
+    
+        const displayTime = (() => {
+            if (session.time && String(session.time).trim() !== '') return session.time;
+            // Si tienes dateTime y no time separado, extraer hora
+            if (isValidDateString(session.dateTime)) {
+                const d = new Date(session.dateTime);
+                if (!isNaN(d.getTime())) {
+                    // formatea HH:mm (dos dígitos)
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const mm = String(d.getMinutes()).padStart(2, '0');
+                    return `${hh}:${mm}`;
+                }
+            }
+            return 'Pendiente';
+        })();
+    
+        const priceText = (typeof session.price === 'number' || (session.price && session.price.trim && session.price.trim() !== ''))
+            ? UIHelpers.formatPrice(session.price)
+            : 'Consultar';
+    
         const card = document.createElement('div');
         card.className = 'session-card';
         card.style.animationDelay = `${index * 0.1}s`;
@@ -244,33 +298,33 @@ class SesionesEntrenadorManager {
                 <span class="session-status ${statusClass}">${statusText}</span>
             </div>
             <div class="session-card-body">
-                <h3 class="session-title">${session.title}</h3>
+                <h3 class="session-title">${session.title || 'Sin título'}</h3>
                 
                 <div class="session-detail">
                     <i class="bi bi-person session-detail-icon"></i>
-                    <span><strong>Cliente:</strong> ${session.clientName}</span>
+                    <span><strong>Cliente:</strong> ${session.clientName || 'N/A'}</span>
                 </div>
                 
                 <div class="session-detail">
                     <i class="bi bi-calendar-event session-detail-icon"></i>
-                    <span><strong>Fecha:</strong> ${UIHelpers.formatDate(session.date)}</span>
+                    <span><strong>Fecha:</strong> ${displayDate}</span>
                 </div>
                 
                 <div class="session-detail">
                     <i class="bi bi-clock session-detail-icon"></i>
-                    <span><strong>Hora:</strong> ${session.time}</span>
+                    <span><strong>Hora:</strong> ${displayTime}</span>
                 </div>
                 
                 <div class="session-detail">
                     <i class="bi bi-geo-alt session-detail-icon"></i>
-                    <span><strong>Ubicación:</strong> ${session.location}</span>
+                    <span><strong>Ubicación:</strong> ${session.location || 'Por definir'}</span>
                 </div>
                 
                 <div class="session-detail">
                     <i class="bi bi-cash-coin session-detail-icon"></i>
-                    <span><strong>Precio:</strong> ${UIHelpers.formatPrice(session.price)}</span>
+                    <span><strong>Precio:</strong> ${priceText}</span>
                 </div>
-
+    
                 <div class="session-actions">
                     <button class="btn btn-outline-primary btn-sm btn-details" data-session-id="${session.id}">
                         <i class="bi bi-info-circle"></i> Detalles
@@ -299,28 +353,28 @@ class SesionesEntrenadorManager {
                 </div>
             </div>
         `;
-
+                    
         // Agregar event listeners
         const detailsBtn = card.querySelector('.btn-details');
         if (detailsBtn) {
             detailsBtn.addEventListener('click', () => this.showSessionDetails(session.id));
         }
-
+    
         const confirmBtn = card.querySelector('.btn-confirm');
         if (confirmBtn) {
             confirmBtn.addEventListener('click', () => this.openConfirmarModal(session.id));
         }
-
+    
         const chatBtn = card.querySelector('.btn-chat');
         if (chatBtn) {
             chatBtn.addEventListener('click', () => this.startChat(session.id));
         }
-
+    
         const finishBtn = card.querySelector('.btn-finish');
         if (finishBtn) {
             finishBtn.addEventListener('click', () => this.openFinalizarModal(session.id));
         }
-
+    
         return card;
     }
 
@@ -551,7 +605,7 @@ Si tienes alguna pregunta, puedes contactar a tu entrenador a través del chat d
         const notes = document.getElementById('finishNotes').value;
 
         const submitBtn = document.getElementById('btnFinalizarSesion');
-        
+
         try {
             UIHelpers.showButtonSpinner(submitBtn, true);
 
@@ -573,6 +627,41 @@ Si tienes alguna pregunta, puedes contactar a tu entrenador a través del chat d
                 throw new Error("Sesión no encontrada tras fallback");
             }
 
+            // --- VALIDACIÓN: la fecha/hora actual debe ser posterior a la fecha/hora de la sesión ---
+            // Intentar obtener un Date válido desde distintos campos posibles
+            let sessionDateTime = null;
+
+            // Si ya tienes un campo datetime ISO
+            if (session.dateTime) {
+                sessionDateTime = new Date(session.dateTime);
+            } else {
+                // Si dispones de fecha y hora separados: session.date (YYYY-MM-DD) y session.time (HH:mm o HH:mm:ss)
+                if (session.date && session.time) {
+                    // Normalizar: juntar en formato ISO local si time no tiene zona
+                    const combined = `${session.date}T${session.time}`;
+                    sessionDateTime = new Date(combined);
+                } else if (session.date) {
+                    // Solo fecha: considerar inicio del día (00:00) o puedes ajustar según tu lógica
+                    sessionDateTime = new Date(`${session.date}T00:00:00`);
+                }
+            }
+
+            if (!sessionDateTime || isNaN(sessionDateTime.getTime())) {
+                console.warn("No se pudo parsear la fecha/hora de la sesión:", session);
+                // Si no es posible validar la fecha, evitar finalizar por seguridad
+                UIHelpers.showToast('No es posible validar la fecha de la sesión. Contacta soporte.', 'warning');
+                return;
+            }
+
+            const now = new Date();
+
+            // Comparación: solo permitir finalizar si la fecha/hora actual es mayor a la de la sesión
+            if (now.getTime() <= sessionDateTime.getTime()) {
+                UIHelpers.showToast('No puedes finalizar una sesión que aún no ha ocurrido.', 'warning');
+                return;
+            }
+            // -------------------------------------------------------------------------------
+
             // Preparar datos para actualizar
             const updateData = {
                 idSesion: sessionId,
@@ -591,45 +680,45 @@ Si tienes alguna pregunta, puedes contactar a tu entrenador a través del chat d
 
             // Actualizar sesión
             const response = await ApiClient.put('/Sesion/actualizar', updateData);
-            
+
             if (response) {
                 // ==================== ENVIAR CORREO DE FINALIZACIÓN ====================
                 const asunto = '¡Sesión completada! Déjanos tu opinión - SportLink Colombia';
-                
+
                 const mensaje = `Hola ${session.clientName},
 
 ¡Tu sesión de "${session.title}", con el entrenador ${this.currentTrainer.nombres} ${this.currentTrainer.apellidos} ha sido completada exitosamente!
-
+        
 🏆 Detalles de la sesión:
 📅 Fecha: ${this.formatearFechaLegible(session.date)}
 🕐 Hora: ${session.time}
 📍 Ubicación: ${session.location}
-
+        
 ${notes ? `📝 Observaciones del entrenador: ${notes}` : ''}
-
+        
 ⭐ ¿Qué te pareció la sesión?
 Nos encantaría conocer tu opinión sobre la experiencia con tu entrenador. Tu feedback es muy importante para nosotros y ayuda a otros usuarios a encontrar los mejores entrenadores.
-
+        
 👉 Ingresa a tu perfil en SportLink Colombia y califica esta sesión.
-
+        
 ¡Esperamos verte pronto en tu próxima sesión!
-
+        
 ---
     SportLink Colombia
     Tu plataforma de entrenamiento deportivo`;
 
                 // Enviar correo de notificación
                 await this.enviarCorreoNotificacion(session.clienteId, asunto, mensaje);
-                
+
                 UIHelpers.showToast('Sesión finalizada y cliente notificado por correo', 'success');
-                
+
                 // Cerrar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('finalizarSesionModal'));
                 modal.hide();
-                
+
                 // Limpiar formulario
                 document.getElementById('finishNotes').value = '';
-                
+
                 // Recargar sesiones
                 await this.loadSessions();
             }

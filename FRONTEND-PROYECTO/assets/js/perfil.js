@@ -192,61 +192,50 @@ class PerfilPageManager {
 
     async loadScheduledSessions() {
         const container = document.getElementById('agendadasContainer');
-
+    
         try {
             const currentUser = AuthManager.getUser();
             if (!currentUser || !currentUser.idCliente) {
                 throw new Error('Usuario no autenticado');
             }
-
+        
             const idCliente = currentUser.idCliente;
             const estados = ['Pendiente', 'Confirmada', 'Activa'];
-
+        
             // Llamadas en paralelo a tu nuevo endpoint
             const peticiones = estados.map(estado => 
                 ApiClient.get(`/Sesion/obtener/idCliente/${idCliente}/estado/${estado}`)
             );
-
+        
             const resultados = await Promise.all(peticiones);
-            console.log("Sesiones agendadas: ", resultados)
-
+        
             // Combinar todas las sesiones de los distintos estados
             const todasLasSesiones = resultados.flat();
-
+        
             if (!todasLasSesiones || todasLasSesiones.length === 0) {
                 this.scheduledSessions = [];
                 this.renderScheduledSessions([]);
                 return;
             }
-
-            // Filtrar solo sesiones futuras
-            const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
-
-            const sesionesFuturas = todasLasSesiones.filter(sesion => {
-                const fechaSesion = new Date(sesion.fechaHora);
-                return fechaSesion >= hoy;
-            });
-
-            // Mapear al formato esperado por la vista
-            this.scheduledSessions = sesionesFuturas.map(sesion => this.mapSesionToView(sesion));
-
+        
+            // Mapear al formato esperado por la vista (sin filtrar por fecha)
+            this.scheduledSessions = todasLasSesiones.map(sesion => this.mapSesionToView(sesion));
+        
             // Ordenar por fecha (más próximas primero)
             this.scheduledSessions.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-
+        
             // Renderizar en pantalla
             this.renderScheduledSessions(this.scheduledSessions);
-
+        
         } catch (error) {
             console.error('Error loading scheduled sessions:', error);
             container.innerHTML = this.getErrorState('Error al cargar las sesiones agendadas');
         }
     }
 
-
     async loadCompletedSessions() {
         const container = document.getElementById('completadasContainer');
-    
+
         try {
             const currentUser = AuthManager.getUser();
             if (!currentUser || !currentUser.idCliente) {
@@ -262,6 +251,7 @@ class PerfilPageManager {
             );
         
             const resultados = await Promise.all(peticiones);
+            console.log("Completadas: ", resultados);
             const todasLasSesiones = resultados.flat();
         
             if (!todasLasSesiones || todasLasSesiones.length === 0) {
@@ -270,21 +260,23 @@ class PerfilPageManager {
                 return;
             }
         
-            // Filtrar sesiones que ya ocurrieron (por fecha)
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
-        
-            const sesionesCompletadas = todasLasSesiones.filter(sesion => {
+
+            // 🛑 Filtrar sesiones sin fecha válida
+            const sesionesConFechaValida = todasLasSesiones.filter(sesion => {
+                if (!sesion.fechaHora) return false;
                 const fechaSesion = new Date(sesion.fechaHora);
-                return fechaSesion < hoy;
+                return !isNaN(fechaSesion.getTime());
             });
+
+            // 🟢 NO filtramos por fecha, solo usamos el estado que viene del backend
+            const sesionesCompletadas = sesionesConFechaValida;
         
             // Mapear al formato esperado por la vista
             this.completedSessions = sesionesCompletadas.map(sesion => {
                 const mapped = this.mapSesionToView(sesion);
             
-                // Si en tu backend no envías reseñas dentro de las sesiones,
-                // puedes hacer otra llamada luego para obtenerlas si lo deseas.
                 return {
                     ...mapped,
                     hasReview: sesion.resenia ? true : false,
@@ -305,6 +297,7 @@ class PerfilPageManager {
             container.innerHTML = this.getErrorState('Error al cargar las sesiones completadas');
         }
     }
+
 
 
     // NUEVA FUNCIÓN: Mapear sesión del API al formato de vista
@@ -492,47 +485,58 @@ class PerfilPageManager {
             saveBtn.disabled = true;
         }
     }
-
+    
     async handleAvatarUpload() {
         const fileInput = document.getElementById('avatarFile');
         const saveBtn = document.getElementById('saveAvatarBtn');
-        const spinner = document.getElementById('avatarSpinner');
-        
+
         if (!fileInput.files[0]) return;
 
         try {
             UIHelpers.showButtonSpinner(saveBtn, true);
 
-            const formData = new FormData();
-            formData.append('avatar', fileInput.files[0]);
-
-            // TODO: Reemplazar con llamada real al API
-            // const response = await ApiClient.post('/user/avatar', formData, true);
-            
-            // Simulación temporal
-            const response = await this.simulateUploadAvatar(formData);
-            
-            if (response.success) {
-                // Actualizar avatar en la página
-                document.getElementById('profileAvatar').src = response.avatarUrl;
-                
-                UIHelpers.showToast('Foto de perfil actualizada', 'success');
-                
-                // Cerrar modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('avatarModal'));
-                modal.hide();
-                
-                // Limpiar formulario
-                fileInput.value = '';
-                document.getElementById('avatarPreview').style.display = 'none';
-                saveBtn.disabled = true;
-            } else {
-                throw new Error(response.message || 'Error al subir imagen');
+            const currentUser = AuthManager.getUser();
+            if (!currentUser || !currentUser.idCliente) {
+                throw new Error("Cliente no autenticado");
             }
+
+            const formData = new FormData();
+            formData.append('fotoPerfil', fileInput.files[0]);
+            formData.append('idCliente', currentUser.idCliente);
+
+            const response = await fetch(`${CONFIG.API_BASE_URL}/Cliente/actualizarFotoPerfil`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al subir la imagen');
+            }
+
+            const updatedUser = await response.json();
+
+            // Actualizar avatar visualmente
+            document.getElementById('profileAvatar').src = updatedUser.fotoPerfil;
+
+            // Guardar en sesión
+            AuthManager.login(AuthManager.getToken(), {
+                ...updatedUser,
+                tipoUsuario: 'cliente'
+            });
+
+            UIHelpers.showToast('Foto de perfil actualizada', 'success');
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('avatarModal'));
+            modal.hide();
+
+            fileInput.value = '';
+            document.getElementById('avatarPreview').style.display = 'none';
+            saveBtn.disabled = true;
 
         } catch (error) {
             console.error('Avatar upload error:', error);
-            UIHelpers.showToast(error.message || 'Error al subir la imagen', 'danger');
+            UIHelpers.showToast(error.message, 'danger');
         } finally {
             UIHelpers.showButtonSpinner(saveBtn, false);
         }
@@ -566,7 +570,7 @@ class PerfilPageManager {
                                 <i class="bi bi-geo-alt session-icon"></i> ${session.location}
                             </p>
                             <small class="text-muted">
-                                <i class="bi bi-clock session-icon"></i> ${UIHelpers.formatDate(session.date)} - ${session.time}
+                                <i class="bi bi-clock session-icon"></i> Por confirmar...
                             </small>
                         </div>
                         <div class="text-end">
@@ -820,7 +824,7 @@ class PerfilPageManager {
             console.log('Enviando reseña:', reseniaData);
         
             // Crear reseña en el API
-            const response = await ApiClient.post('/Resenia/crear', reseniaData);
+            const response = await ApiClient.post(`/Resenia/crear/${sesion.idSesion}`, reseniaData);
             
             if (response) {
                 UIHelpers.showToast('Evaluación enviada exitosamente', 'success');

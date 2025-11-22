@@ -721,7 +721,7 @@ class PerfilEntrenadorManager {
     async handleAvatarUpload() {
         const fileInput = document.getElementById('avatarFile');
         const saveBtn = document.getElementById('saveAvatarBtn');
-        
+
         if (!fileInput.files[0]) return;
 
         try {
@@ -731,20 +731,40 @@ class PerfilEntrenadorManager {
             formData.append('idEntrenador', this.currentTrainer.idEntrenador);
             formData.append('fotoPerfil', fileInput.files[0]);
 
-            // TODO: Implementar endpoint para actualizar foto cuando esté disponible
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const response = { fotoUrl: URL.createObjectURL(fileInput.files[0]) };
+            // Llamado REAL al backend
+            const response = await fetch(`${CONFIG.API_BASE_URL}/Entrenador/actualizarFotoPerfil`, {
+                method: 'POST',
+                body: formData
+            });
 
-            document.getElementById('profileAvatar').src = response.fotoUrl;
-            
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const updatedTrainer = await response.json();
+
+            // Actualizar UI
+            document.getElementById('profileAvatar').src = updatedTrainer.fotoPerfil;
+
+            // Actualizar datos en sesión
+            AuthManager.login(AuthManager.getToken(), {
+                ...this.currentTrainer,
+                fotoPerfil: updatedTrainer.fotoPerfil
+            });
+
             UIHelpers.showToast('Foto de perfil actualizada', 'success');
-            
+
+            // Cerrar modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('avatarModal'));
             modal.hide();
-            
+
+            // Limpiar
             fileInput.value = '';
             document.getElementById('avatarPreview').style.display = 'none';
             saveBtn.disabled = true;
+
+            // Sync local variable
+            this.currentTrainer.fotoPerfil = updatedTrainer.fotoPerfil;
 
         } catch (error) {
             console.error('Avatar upload error:', error);
@@ -753,6 +773,7 @@ class PerfilEntrenadorManager {
             UIHelpers.showButtonSpinner(saveBtn, false);
         }
     }
+
 
     // ==================== UTILIDADES ====================
     getEmptyState(icon, title, description) {
