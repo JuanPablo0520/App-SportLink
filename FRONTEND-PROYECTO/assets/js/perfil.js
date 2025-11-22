@@ -190,158 +190,104 @@ class PerfilPageManager {
         }
     }
 
+    // ==================== CARGAR SESIONES AGENDADAS ====================
+    // Estados: Pendiente, Confirmada
     async loadScheduledSessions() {
         const container = document.getElementById('agendadasContainer');
-    
         try {
             const currentUser = AuthManager.getUser();
-            if (!currentUser || !currentUser.idCliente) {
-                throw new Error('Usuario no autenticado');
-            }
-        
+            if (!currentUser || !currentUser.idCliente) throw new Error('Usuario no autenticado');
+
             const idCliente = currentUser.idCliente;
-            const estados = ['Pendiente', 'Confirmada', 'Activa'];
-        
-            // Llamadas en paralelo a tu nuevo endpoint
-            const peticiones = estados.map(estado => 
+            const estados = ['Pendiente', 'Confirmada'];
+
+            const peticiones = estados.map(estado =>
                 ApiClient.get(`/Sesion/obtener/idCliente/${idCliente}/estado/${estado}`)
             );
-        
             const resultados = await Promise.all(peticiones);
-        
-            // Combinar todas las sesiones de los distintos estados
             const todasLasSesiones = resultados.flat();
-        
+
             if (!todasLasSesiones || todasLasSesiones.length === 0) {
                 this.scheduledSessions = [];
                 this.renderScheduledSessions([]);
                 return;
             }
-        
-            // Mapear al formato esperado por la vista (sin filtrar por fecha)
+
             this.scheduledSessions = todasLasSesiones.map(sesion => this.mapSesionToView(sesion));
-        
-            // Ordenar por fecha (más próximas primero)
             this.scheduledSessions.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-        
-            // Renderizar en pantalla
             this.renderScheduledSessions(this.scheduledSessions);
-        
         } catch (error) {
             console.error('Error loading scheduled sessions:', error);
             container.innerHTML = this.getErrorState('Error al cargar las sesiones agendadas');
         }
     }
 
+    // ==================== CARGAR SESIONES COMPLETADAS ====================
+    // Estados: Finalizada, Calificado
     async loadCompletedSessions() {
         const container = document.getElementById('completadasContainer');
-
         try {
             const currentUser = AuthManager.getUser();
-            if (!currentUser || !currentUser.idCliente) {
-                throw new Error('Usuario no autenticado');
-            }
-        
+            if (!currentUser || !currentUser.idCliente) throw new Error('Usuario no autenticado');
+
             const idCliente = currentUser.idCliente;
-            const estados = ['Completada', 'Finalizada'];
-        
-            // Obtener sesiones completadas y finalizadas en paralelo
+            const estados = ['Finalizada', 'Calificado'];
+
             const peticiones = estados.map(estado =>
                 ApiClient.get(`/Sesion/obtener/idCliente/${idCliente}/estado/${estado}`)
             );
-        
             const resultados = await Promise.all(peticiones);
-            console.log("Completadas: ", resultados);
             const todasLasSesiones = resultados.flat();
-        
+
             if (!todasLasSesiones || todasLasSesiones.length === 0) {
                 this.completedSessions = [];
                 this.renderCompletedSessions([]);
                 return;
             }
-        
-            const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
 
-            // 🛑 Filtrar sesiones sin fecha válida
-            const sesionesConFechaValida = todasLasSesiones.filter(sesion => {
-                if (!sesion.fechaHora) return false;
-                const fechaSesion = new Date(sesion.fechaHora);
-                return !isNaN(fechaSesion.getTime());
-            });
-
-            // 🟢 NO filtramos por fecha, solo usamos el estado que viene del backend
-            const sesionesCompletadas = sesionesConFechaValida;
-        
-            // Mapear al formato esperado por la vista
-            this.completedSessions = sesionesCompletadas.map(sesion => {
+            this.completedSessions = todasLasSesiones.map(sesion => {
                 const mapped = this.mapSesionToView(sesion);
-            
+                const estadoOriginal = sesion.estado || '';
                 return {
                     ...mapped,
-                    hasReview: sesion.resenia ? true : false,
-                    rating: sesion.resenia ? sesion.resenia.calificacion : 0,
-                    review: sesion.resenia ? sesion.resenia.comentario : null,
-                    idResenia: sesion.resenia ? sesion.resenia.idResenia : null
+                    estadoOriginal: estadoOriginal,
+                    hasReview: estadoOriginal === 'Calificado',
+                    rating: sesion.resenia?.calificacion || 0,
+                    review: sesion.resenia?.comentario || null,
+                    idResenia: sesion.resenia?.idResenia || null
                 };
             });
-        
-            // Ordenar por fecha (más recientes primero)
+
             this.completedSessions.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
-        
-            // Renderizar en pantalla
             this.renderCompletedSessions(this.completedSessions);
-        
         } catch (error) {
             console.error('Error loading completed sessions:', error);
             container.innerHTML = this.getErrorState('Error al cargar las sesiones completadas');
         }
     }
 
-
-
-    // NUEVA FUNCIÓN: Mapear sesión del API al formato de vista
     mapSesionToView(sesion) {
-        const fechaHora = new Date(sesion.fechaHora);
-
-        // Extraer fecha y hora
+        const fechaHora = sesion.fechaHora ? new Date(sesion.fechaHora) : new Date();
         const fecha = fechaHora.toISOString().split('T')[0];
-        const hora = fechaHora.toLocaleTimeString('es-CO', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-        });
-
-        // Obtener información del servicio
-        const servicioNombre = sesion.servicio?.nombre || 'Sesión de Entrenamiento';
-        const deporte = sesion.servicio?.deporte || '';
-        const ubicacion = sesion.servicio?.ubicacion || 'Ubicación no especificada';
-        const precio = sesion.servicio?.precio || 0;
-        const duracion = sesion.servicio?.duracion || 60;
-
-        // Obtener información del entrenador
-        const entrenadorNombre = sesion.entrenador 
-            ? `${sesion.entrenador.nombres} ${sesion.entrenador.apellidos}`
-            : 'Entrenador';
-
-        const entrenadorEmail = sesion.entrenador?.correo || '';
+        const hora = fechaHora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
 
         return {
             id: sesion.idSesion,
             idSesion: sesion.idSesion,
-            title: servicioNombre,
-            trainerName: entrenadorNombre,
-            location: ubicacion,
+            title: sesion.servicio?.nombre || 'Sesión de Entrenamiento',
+            trainerName: sesion.entrenador ? `${sesion.entrenador.nombres} ${sesion.entrenador.apellidos}` : 'Entrenador',
+            location: sesion.servicio?.ubicacion || 'Ubicación no especificada',
             date: fecha,
             dateTime: sesion.fechaHora,
             time: hora,
-            price: precio,
-            sport: deporte,
-            duration: duracion,
+            price: sesion.servicio?.precio || 0,
+            sport: sesion.servicio?.deporte || '',
+            duration: sesion.servicio?.duracion || 60,
             status: sesion.estado || 'Pendiente',
-            entrenadorEmail: entrenadorEmail,
+            entrenadorEmail: sesion.entrenador?.correo || '',
             entrenadorId: sesion.entrenador?.idEntrenador,
-            servicioId: sesion.servicio?.idServicio
+            servicioId: sesion.servicio?.idServicio,
+            clienteId: sesion.cliente?.idCliente
         };
     }
 

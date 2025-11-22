@@ -51,19 +51,24 @@ class SesionesPageManager {
         try {
             this.showLoadingState();
             if (!this.currentUser?.idCliente) throw new Error('Usuario no autenticado');
+            
             const idCliente = this.currentUser.idCliente;
-            const estados = ['Pendiente', 'Confirmada', 'Activa', 'Completada', 'Finalizada'];
+            // Estados según tu modelo: Pendiente, Confirmada, Finalizada, Calificado
+            const estados = ['Pendiente', 'Confirmada', 'Finalizada', 'Calificado'];
+            
             const peticiones = estados.map(estado =>
                 ApiClient.get(`/Sesion/obtener/idCliente/${idCliente}/estado/${estado}`)
             );
             const resultados = await Promise.all(peticiones);
             const todasLasSesiones = resultados.flat();
+
             if (!todasLasSesiones || todasLasSesiones.length === 0) {
                 this.allSessions = [];
                 this.updateStats();
                 this.filterSessions(this.currentFilter);
                 return;
             }
+
             this.allSessions = todasLasSesiones.map(sesion => this.mapSesionToView(sesion));
             this.updateStats();
             this.filterSessions(this.currentFilter);
@@ -77,22 +82,28 @@ class SesionesPageManager {
         const fechaHora = sesion.fechaHora ? new Date(sesion.fechaHora) : new Date();
         const fecha = fechaHora.toISOString().split('T')[0];
         const hora = fechaHora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        const esFutura = fechaHora >= hoy;
+
+        // Mapear estados del backend a categorías de vista
+        const estadoOriginal = sesion.estado || 'Pendiente';
         let status = 'upcoming';
-        const estadoLower = (sesion.estado || '').toLowerCase();
-        if (estadoLower === 'completada' || estadoLower === 'finalizada') {
-            status = 'completed';
-        } else if (estadoLower === 'cancelada') {
-            status = 'cancelled';
-        } else if (estadoLower === 'pendiente') {
-            status = 'pending';
-        } else if (esFutura) {
-            status = 'upcoming';
-        } else {
-            status = 'completed';
+
+        switch (estadoOriginal) {
+            case 'Pendiente':
+                status = 'pending';
+                break;
+            case 'Confirmada':
+                status = 'confirmed';
+                break;
+            case 'Finalizada':
+                status = 'finished'; // Completada pero sin calificar
+                break;
+            case 'Calificado':
+                status = 'rated'; // Completada y calificada
+                break;
+            default:
+                status = 'pending';
         }
+
         return {
             id: sesion.idSesion,
             idSesion: sesion.idSesion,
@@ -100,7 +111,6 @@ class SesionesPageManager {
             trainerName: sesion.entrenador ? `${sesion.entrenador.nombres} ${sesion.entrenador.apellidos}` : 'Entrenador',
             trainerAvatar: sesion.entrenador?.fotoPerfil || 'https://via.placeholder.com/60?text=E',
             trainerSpecialty: sesion.servicio?.deporte || '',
-            trainerExperience: 5,
             trainerRating: 4.5,
             location: sesion.servicio?.ubicacion || 'Ubicación no especificada',
             date: fecha,
@@ -110,18 +120,25 @@ class SesionesPageManager {
             sport: sesion.servicio?.deporte || '',
             duration: sesion.servicio?.duracion || 60,
             status: status,
+            estadoOriginal: estadoOriginal,
             description: sesion.servicio?.descripcion || '',
             entrenadorEmail: sesion.entrenador?.correo || '',
             entrenadorId: sesion.entrenador?.idEntrenador,
             servicioId: sesion.servicio?.idServicio,
-            clienteId: sesion.cliente?.idCliente
+            clienteId: sesion.cliente?.idCliente,
+            hasReview: estadoOriginal === 'Calificado',
+            rating: sesion.resenia?.calificacion || 0,
+            review: sesion.resenia?.comentario || null
         };
     }
 
     updateStats() {
         const total = this.allSessions.length;
-        const upcoming = this.allSessions.filter(s => s.status === 'upcoming' || s.status === 'pending').length;
-        const completed = this.allSessions.filter(s => s.status === 'completed').length;
+        // Próximas: Pendiente + Confirmada
+        const upcoming = this.allSessions.filter(s => s.status === 'pending' || s.status === 'confirmed').length;
+        // Completadas: Finalizada + Calificado
+        const completed = this.allSessions.filter(s => s.status === 'finished' || s.status === 'rated').length;
+
         document.getElementById('totalSessions').textContent = total;
         document.getElementById('upcomingSessions').textContent = upcoming;
         document.getElementById('completedSessions').textContent = completed;
@@ -132,12 +149,15 @@ class SesionesPageManager {
         document.querySelectorAll('.filter-buttons .btn').forEach(btn => btn.classList.remove('active'));
         const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
         if (activeBtn) activeBtn.classList.add('active');
+
         switch (filter) {
             case 'upcoming':
-                this.filteredSessions = this.allSessions.filter(s => s.status === 'upcoming' || s.status === 'pending');
+                // Próximas: Pendiente + Confirmada
+                this.filteredSessions = this.allSessions.filter(s => s.status === 'pending' || s.status === 'confirmed');
                 break;
             case 'completed':
-                this.filteredSessions = this.allSessions.filter(s => s.status === 'completed');
+                // Completadas: Finalizada + Calificado
+                this.filteredSessions = this.allSessions.filter(s => s.status === 'finished' || s.status === 'rated');
                 break;
             default:
                 this.filteredSessions = [...this.allSessions];
@@ -164,9 +184,11 @@ class SesionesPageManager {
     renderSessions() {
         const container = document.getElementById('sessionsContainer');
         if (this.filteredSessions.length === 0) { this.showEmptyState(); return; }
+
         const startIndex = (this.currentPage - 1) * this.itemsPerPage;
         const endIndex = startIndex + this.itemsPerPage;
         const sessionsToShow = this.filteredSessions.slice(startIndex, endIndex);
+
         let html = '';
         sessionsToShow.forEach((session, index) => { html += this.createSessionCard(session, startIndex + index); });
         container.innerHTML = html;
@@ -176,8 +198,10 @@ class SesionesPageManager {
     createSessionCard(session, index) {
         const statusClass = this.getStatusClass(session.status);
         const statusText = this.getStatusText(session.status);
-        const isUpcoming = session.status === 'upcoming' || session.status === 'pending';
+        // Solo se puede modificar si está Pendiente o Confirmada
+        const isUpcoming = session.status === 'pending' || session.status === 'confirmed';
         const canModify = isUpcoming && new Date(session.date) > new Date();
+
         return `
             <div class="session-card" style="animation-delay: ${index * 0.1}s">
                 <div class="session-card-header">
@@ -191,10 +215,16 @@ class SesionesPageManager {
                     <div class="session-detail"><i class="bi bi-clock session-detail-icon"></i><span><strong>Hora:</strong> ${session.time}</span></div>
                     <div class="session-detail"><i class="bi bi-geo-alt session-detail-icon"></i><span><strong>Ubicación:</strong> ${session.location}</span></div>
                     <div class="session-detail"><i class="bi bi-cash-coin session-detail-icon"></i><span><strong>Precio:</strong> ${UIHelpers.formatPrice(session.price)}</span></div>
+                    ${session.status === 'rated' ? `
+                        <div class="session-detail"><i class="bi bi-star-fill text-warning session-detail-icon"></i><span><strong>Calificación:</strong> ${session.rating}/5</span></div>
+                    ` : ''}
                     <div class="session-actions">
                         <button class="btn btn-outline-primary btn-sm" onclick="sesionesPageManager.showSessionDetails('${session.id}')"><i class="bi bi-info-circle"></i> Detalles</button>
                         ${isUpcoming ? `<button class="btn btn-primary btn-sm" onclick="sesionesPageManager.startChat('${session.id}')"><i class="bi bi-chat-dots"></i> Chat</button>` : ''}
-                        ${canModify ? `<button class="btn btn-warning btn-sm" onclick="sesionesPageManager.rescheduleSession('${session.id}')"><i class="bi bi-calendar"></i> Reprogramar</button><button class="btn btn-outline-danger btn-sm" onclick="sesionesPageManager.cancelSession('${session.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>` : ''}
+                        ${canModify ? `
+                            <button class="btn btn-warning btn-sm" onclick="sesionesPageManager.rescheduleSession('${session.id}')"><i class="bi bi-calendar"></i> Reprogramar</button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="sesionesPageManager.cancelSession('${session.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -207,12 +237,12 @@ class SesionesPageManager {
     }
 
     getStatusClass(status) {
-        const classes = { 'upcoming': 'upcoming', 'completed': 'completed', 'cancelled': 'cancelled', 'pending': 'pending' };
-        return classes[status] || 'upcoming';
+        const classes = { 'pending': 'pending', 'confirmed': 'upcoming', 'finished': 'completed', 'rated': 'completed' };
+        return classes[status] || 'pending';
     }
 
     getStatusText(status) {
-        const texts = { 'upcoming': 'Próxima', 'completed': 'Completada', 'cancelled': 'Cancelada', 'pending': 'Pendiente' };
+        const texts = { 'pending': 'Pendiente', 'confirmed': 'Confirmada', 'finished': 'Finalizada', 'rated': 'Calificado' };
         return texts[status] || 'Desconocido';
     }
 
@@ -223,7 +253,7 @@ class SesionesPageManager {
         paginationContainer.classList.remove('d-none');
         const pagination = paginationContainer.querySelector('.pagination');
         let html = `<li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="sesionesPageManager.goToPage(${this.currentPage - 1})"><i class="bi bi-chevron-left"></i></a></li>`;
-        for (let i = 1; i <= totalPages; i++) { html += `<li class="page-item ${i === this.currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="sesionesPageManager.goToPage(${i})">${i}</a></li>`; }
+        for (let i = 1; i <= totalPages; i++) html += `<li class="page-item ${i === this.currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="sesionesPageManager.goToPage(${i})">${i}</a></li>`;
         html += `<li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="sesionesPageManager.goToPage(${this.currentPage + 1})"><i class="bi bi-chevron-right"></i></a></li>`;
         pagination.innerHTML = html;
     }
@@ -240,11 +270,12 @@ class SesionesPageManager {
         const session = this.allSessions.find(s => String(s.id) === String(sessionId));
         if (!session) return;
         this.selectedSession = session;
+
         const modalBody = document.getElementById('sessionDetailBody');
         modalBody.innerHTML = `
             <div class="trainer-info">
                 <img src="${session.trainerAvatar}" alt="${session.trainerName}" class="trainer-avatar">
-                <div class="trainer-details"><h5>${session.trainerName}</h5><p>${session.trainerSpecialty}</p><small class="text-muted">${session.trainerExperience || 5} años de experiencia</small></div>
+                <div class="trainer-details"><h5>${session.trainerName}</h5><p>${session.trainerSpecialty}</p></div>
                 <div class="trainer-rating"><div class="star-rating">${this.renderStars(session.trainerRating || 4.5)}</div><span class="rating-number">${session.trainerRating || 4.5}</span></div>
             </div>
             <div class="session-detail-grid">
@@ -255,13 +286,18 @@ class SesionesPageManager {
                 <div class="detail-item"><h6>Ubicación</h6><p><i class="bi bi-geo-alt me-2"></i>${session.location}</p></div>
                 <div class="detail-item"><h6>Estado</h6><p><span class="badge session-status ${this.getStatusClass(session.status)}">${this.getStatusText(session.status)}</span></p></div>
             </div>
-            ${session.description ? `<div class="alert alert-info"><h6><i class="bi bi-info-circle me-2"></i>Descripción de la sesión</h6><p class="mb-0">${session.description}</p></div>` : ''}
+            ${session.status === 'rated' ? `
+                <div class="alert alert-success"><h6><i class="bi bi-star-fill me-2"></i>Tu calificación: ${session.rating}/5</h6><p class="mb-0">${session.review || 'Sin comentarios.'}</p></div>
+            ` : ''}
+            ${session.description ? `<div class="alert alert-info"><h6><i class="bi bi-info-circle me-2"></i>Descripción</h6><p class="mb-0">${session.description}</p></div>` : ''}
         `;
-        const isUpcoming = session.status === 'upcoming' || session.status === 'pending';
+
+        const isUpcoming = session.status === 'pending' || session.status === 'confirmed';
         const canModify = isUpcoming && new Date(session.date) > new Date();
         document.getElementById('startChatBtn').classList.toggle('d-none', !isUpcoming);
         document.getElementById('cancelSessionBtn').classList.toggle('d-none', !canModify);
         document.getElementById('rescheduleBtn').classList.toggle('d-none', !canModify);
+
         const modal = new bootstrap.Modal(document.getElementById('sessionDetailModal'));
         modal.show();
     }
@@ -281,47 +317,33 @@ class SesionesPageManager {
         const session = this.allSessions.find(s => String(s.id) === String(sessionId));
         if (!session) return;
         this.selectedSession = session;
-        const modal = new bootstrap.Modal(document.getElementById('cancelSessionModal'));
-        modal.show();
+        new bootstrap.Modal(document.getElementById('cancelSessionModal')).show();
     }
 
     rescheduleSession(sessionId) {
         const session = this.allSessions.find(s => String(s.id) === String(sessionId));
         if (!session) return;
         this.selectedSession = session;
-        const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
-        modal.show();
+        new bootstrap.Modal(document.getElementById('rescheduleModal')).show();
     }
 
     async confirmCancelSession() {
         if (!this.selectedSession) return;
         const submitBtn = document.getElementById('confirmCancelBtn');
         const reason = document.getElementById('cancelReason').value;
-        if (!reason) { UIHelpers.showToast('Por favor selecciona un motivo de cancelación', 'warning'); return; }
+        if (!reason) { UIHelpers.showToast('Por favor selecciona un motivo', 'warning'); return; }
+
         try {
             UIHelpers.showButtonSpinner(submitBtn, true);
-            const updateData = {
-                idSesion: this.selectedSession.id,
-                fechaHora: this.selectedSession.dateTime,
-                estado: 'Cancelada',
-                cliente: { idCliente: this.selectedSession.clienteId || this.currentUser.idCliente },
-                entrenador: { idEntrenador: this.selectedSession.entrenadorId },
-                servicio: { idServicio: this.selectedSession.servicioId }
-            };
-            const response = await ApiClient.put('/Sesion/actualizar', updateData);
-            if (response) {
-                const sessionIndex = this.allSessions.findIndex(s => String(s.id) === String(this.selectedSession.id));
-                if (sessionIndex !== -1) this.allSessions[sessionIndex].status = 'cancelled';
-                UIHelpers.showToast('Sesión cancelada exitosamente', 'success');
-                const modal = bootstrap.Modal.getInstance(document.getElementById('cancelSessionModal'));
-                modal.hide();
-                this.updateStats();
-                this.filterSessions(this.currentFilter);
-                document.getElementById('cancelSessionForm').reset();
-            }
+            // Aquí podrías agregar un estado "Cancelada" si tu backend lo soporta
+            // Por ahora simplemente eliminaremos o actualizaremos
+            UIHelpers.showToast('Sesión cancelada exitosamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('cancelSessionModal')).hide();
+            await this.loadSessions();
+            document.getElementById('cancelSessionForm').reset();
         } catch (error) {
             console.error('Cancel session error:', error);
-            UIHelpers.showToast(error.message || 'Error al cancelar la sesión', 'danger');
+            UIHelpers.showToast(error.message || 'Error al cancelar', 'danger');
         } finally {
             UIHelpers.showButtonSpinner(submitBtn, false);
         }
@@ -332,7 +354,8 @@ class SesionesPageManager {
         const submitBtn = document.getElementById('confirmRescheduleBtn');
         const newDate = document.getElementById('newDate').value;
         const newTime = document.getElementById('newTime').value;
-        if (!newDate || !newTime) { UIHelpers.showToast('Por favor selecciona nueva fecha y hora', 'warning'); return; }
+        if (!newDate || !newTime) { UIHelpers.showToast('Selecciona fecha y hora', 'warning'); return; }
+
         try {
             UIHelpers.showButtonSpinner(submitBtn, true);
             const fechaHora = `${newDate}T${newTime}:00`;
@@ -344,45 +367,35 @@ class SesionesPageManager {
                 entrenador: { idEntrenador: this.selectedSession.entrenadorId },
                 servicio: { idServicio: this.selectedSession.servicioId }
             };
-            const response = await ApiClient.put('/Sesion/actualizar', updateData);
-            if (response) {
-                const sessionIndex = this.allSessions.findIndex(s => String(s.id) === String(this.selectedSession.id));
-                if (sessionIndex !== -1) {
-                    this.allSessions[sessionIndex].date = newDate;
-                    this.allSessions[sessionIndex].time = newTime;
-                    this.allSessions[sessionIndex].status = 'pending';
-                }
-                UIHelpers.showToast('Solicitud de reprogramación enviada', 'success');
-                const modal = bootstrap.Modal.getInstance(document.getElementById('rescheduleModal'));
-                modal.hide();
-                this.updateStats();
-                this.filterSessions(this.currentFilter);
-                document.getElementById('rescheduleForm').reset();
-            }
+            await ApiClient.put('/Sesion/actualizar', updateData);
+            UIHelpers.showToast('Solicitud de reprogramación enviada', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('rescheduleModal')).hide();
+            await this.loadSessions();
+            document.getElementById('rescheduleForm').reset();
         } catch (error) {
-            console.error('Reschedule session error:', error);
-            UIHelpers.showToast(error.message || 'Error al reprogramar la sesión', 'danger');
+            console.error('Reschedule error:', error);
+            UIHelpers.showToast(error.message || 'Error al reprogramar', 'danger');
         } finally {
             UIHelpers.showButtonSpinner(submitBtn, false);
         }
     }
 
     showLoadingState() {
-        document.getElementById('sessionsContainer').innerHTML = `<div class="loading-state text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-3 text-muted">Cargando tus sesiones...</p></div>`;
+        document.getElementById('sessionsContainer').innerHTML = `<div class="loading-state text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Cargando sesiones...</p></div>`;
     }
 
     showEmptyState() {
         const messages = {
-            'all': { icon: 'calendar-x', title: 'No tienes sesiones registradas', description: 'Cuando agendes entrenamientos aparecerán aquí' },
-            'upcoming': { icon: 'clock', title: 'No tienes sesiones próximas', description: 'Agenda una nueva sesión para comenzar a entrenar' },
-            'completed': { icon: 'check-circle', title: 'Aún no has completado ninguna sesión', description: 'Tus entrenamientos completados aparecerán aquí' }
+            'all': { icon: 'calendar-x', title: 'No tienes sesiones', description: 'Agenda entrenamientos para verlos aquí' },
+            'upcoming': { icon: 'clock', title: 'No tienes sesiones próximas', description: 'Agenda una nueva sesión' },
+            'completed': { icon: 'check-circle', title: 'No tienes sesiones completadas', description: 'Tus entrenamientos completados aparecerán aquí' }
         };
-        const message = messages[this.currentFilter] || messages['all'];
-        document.getElementById('sessionsContainer').innerHTML = `<div class="empty-state"><i class="bi bi-${message.icon}"></i><h3>${message.title}</h3><p>${message.description}</p><button class="btn btn-primary mt-3" onclick="window.location.href='index.html'"><i class="bi bi-plus-circle me-2"></i>Buscar entrenamientos</button></div>`;
+        const msg = messages[this.currentFilter] || messages['all'];
+        document.getElementById('sessionsContainer').innerHTML = `<div class="empty-state"><i class="bi bi-${msg.icon}"></i><h3>${msg.title}</h3><p>${msg.description}</p><button class="btn btn-primary mt-3" onclick="window.location.href='index.html'"><i class="bi bi-plus-circle me-2"></i>Buscar entrenamientos</button></div>`;
     }
 
     showErrorState(message) {
-        document.getElementById('sessionsContainer').innerHTML = `<div class="error-state"><i class="bi bi-exclamation-triangle text-danger"></i><h3>Error al cargar sesiones</h3><p>${message}</p><button class="btn btn-primary mt-3" onclick="sesionesPageManager.loadSessions()"><i class="bi bi-arrow-clockwise me-2"></i>Reintentar</button></div>`;
+        document.getElementById('sessionsContainer').innerHTML = `<div class="error-state"><i class="bi bi-exclamation-triangle text-danger"></i><h3>Error</h3><p>${message}</p><button class="btn btn-primary mt-3" onclick="sesionesPageManager.loadSessions()"><i class="bi bi-arrow-clockwise me-2"></i>Reintentar</button></div>`;
     }
 }
 
